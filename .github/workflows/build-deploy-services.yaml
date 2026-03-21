@@ -1,0 +1,82 @@
+name: "Module F-G: Build & Deploy Services"
+
+on:
+  push:
+    branches: [main]
+    paths: ['src/**']
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  SUBSCRIPTION_ID: e62428e7-08dd-4bc2-82e2-2c51586d9105
+  RG_NAME: rg-flowcore-poc
+  ACR_NAME: acrflowcorepoc
+  AKS_NAME: aks-flowcore-poc
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service:
+          - name: api-gateway
+            path: src/FlowCore.ApiGateway
+          - name: customer-service
+            path: src/FlowCore.CustomerService
+          - name: order-service
+            path: src/FlowCore.OrderService
+          - name: rules-service
+            path: src/FlowCore.RulesService
+          - name: reporting-service
+            path: src/FlowCore.ReportingService
+          - name: audit-service
+            path: src/FlowCore.AuditService
+          - name: notification-worker
+            path: src/FlowCore.NotificationWorker
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
+
+      - name: ACR Login
+        run: az acr login --name ${{ env.ACR_NAME }}
+
+      - name: Build & Push
+        run: |
+          IMAGE=${{ env.ACR_NAME }}.azurecr.io/flowcore/${{ matrix.service.name }}:${{ github.sha }}
+          IMAGE_LATEST=${{ env.ACR_NAME }}.azurecr.io/flowcore/${{ matrix.service.name }}:latest
+          docker build -f ${{ matrix.service.path }}/Dockerfile -t $IMAGE -t $IMAGE_LATEST .
+          docker push $IMAGE
+          docker push $IMAGE_LATEST
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.SUBSCRIPTION_ID }}
+
+      - name: Get AKS Credentials
+        run: az aks get-credentials --resource-group ${{ env.RG_NAME }} --name ${{ env.AKS_NAME }}
+
+      - name: Deploy Manifests
+        run: |
+          export ACR_LOGIN_SERVER=${{ env.ACR_NAME }}.azurecr.io
+          kubectl apply -f deploy/manifests/namespaces.yaml
+          for f in deploy/manifests/*.yaml; do
+            envsubst < "$f" | kubectl apply -f -
+          done

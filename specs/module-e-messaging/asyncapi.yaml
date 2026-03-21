@@ -1,0 +1,129 @@
+asyncapi: 2.6.0
+info:
+  title: FlowCore Event Backbone
+  version: 1.0.0
+  description: Event contract for FlowCore AKS POC
+servers:
+  azureServiceBus:
+    url: ${SERVICE_BUS_NAMESPACE}.servicebus.windows.net
+    protocol: amqp
+    description: Azure Service Bus namespace
+channels:
+  flowcore.events:
+    publish:
+      operationId: publishFlowCoreEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/CustomerUpdated'
+          - $ref: '#/components/messages/CaseCreated'
+          - $ref: '#/components/messages/OrderPlaced'
+          - $ref: '#/components/messages/NotificationRequested'
+          - $ref: '#/components/messages/AuditRecorded'
+    subscribe:
+      operationId: consumeFlowCoreEvent
+      message:
+        oneOf:
+          - $ref: '#/components/messages/CustomerUpdated'
+          - $ref: '#/components/messages/CaseCreated'
+          - $ref: '#/components/messages/OrderPlaced'
+          - $ref: '#/components/messages/NotificationRequested'
+          - $ref: '#/components/messages/AuditRecorded'
+components:
+  messages:
+    CustomerUpdated:
+      name: CustomerUpdated
+      payload:
+        $ref: '#/components/schemas/CustomerUpdatedPayload'
+    CaseCreated:
+      name: CaseCreated
+      payload:
+        $ref: '#/components/schemas/CaseCreatedPayload'
+    OrderPlaced:
+      name: OrderPlaced
+      payload:
+        $ref: '#/components/schemas/OrderPlacedPayload'
+    NotificationRequested:
+      name: NotificationRequested
+      payload:
+        $ref: '#/components/schemas/NotificationRequestedPayload'
+    AuditRecorded:
+      name: AuditRecorded
+      payload:
+        $ref: '#/components/schemas/AuditRecordedPayload'
+  schemas:
+    BaseEvent:
+      type: object
+      required:
+        - eventId
+        - eventType
+        - occurredAtUtc
+        - correlationId
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        occurredAtUtc:
+          type: string
+          format: date-time
+        correlationId:
+          type: string
+    CustomerUpdatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            customerId:
+              type: string
+            changes:
+              type: array
+              items:
+                type: string
+    CaseCreatedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            caseId:
+              type: string
+            customerId:
+              type: string
+    OrderPlacedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            orderId:
+              type: string
+            caseId:
+              type: string
+            amount:
+              type: number
+    NotificationRequestedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            notificationId:
+              type: string
+            channel:
+              type: string
+              enum: [email, sms]
+            recipient:
+              type: string
+            template:
+              type: string
+    AuditRecordedPayload:
+      allOf:
+        - $ref: '#/components/schemas/BaseEvent'
+        - type: object
+          properties:
+            entityType:
+              type: string
+            entityId:
+              type: string
+            action:
+              type: string
+            performedBy:
+              type: string

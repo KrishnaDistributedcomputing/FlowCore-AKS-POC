@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service
+  namespace: apps
+  labels:
+    app: order-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      nodeSelector:
+        workload: apps
+      containers:
+        - name: order-service
+          image: ${ACR_LOGIN_SERVER}/flowcore/order-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ConnectionStrings__OrderDb
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: order-db-connection
+            - name: ConnectionStrings__ServiceBus
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: servicebus-connection
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-service
+  namespace: apps
+spec:
+  selector:
+    app: order-service
+  ports:
+    - port: 80
+      targetPort: 8080

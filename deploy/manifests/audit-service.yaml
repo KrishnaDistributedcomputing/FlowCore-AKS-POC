@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: audit-service
+  namespace: apps
+  labels:
+    app: audit-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: audit-service
+  template:
+    metadata:
+      labels:
+        app: audit-service
+    spec:
+      nodeSelector:
+        workload: apps
+      containers:
+        - name: audit-service
+          image: ${ACR_LOGIN_SERVER}/flowcore/audit-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ConnectionStrings__AuditDb
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: audit-db-connection
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: audit-service
+  namespace: apps
+spec:
+  selector:
+    app: audit-service
+  ports:
+    - port: 80
+      targetPort: 8080

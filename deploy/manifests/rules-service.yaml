@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rules-service
+  namespace: apps
+  labels:
+    app: rules-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rules-service
+  template:
+    metadata:
+      labels:
+        app: rules-service
+    spec:
+      nodeSelector:
+        workload: apps
+      containers:
+        - name: rules-service
+          image: ${ACR_LOGIN_SERVER}/flowcore/rules-service:latest
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rules-service
+  namespace: apps
+spec:
+  selector:
+    app: rules-service
+  ports:
+    - port: 80
+      targetPort: 8080

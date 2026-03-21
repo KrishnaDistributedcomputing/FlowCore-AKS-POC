@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-worker
+  namespace: workers
+  labels:
+    app: notification-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-worker
+  template:
+    metadata:
+      labels:
+        app: notification-worker
+    spec:
+      nodeSelector:
+        workload: workers
+      containers:
+        - name: notification-worker
+          image: ${ACR_LOGIN_SERVER}/flowcore/notification-worker:latest
+          env:
+            - name: ConnectionStrings__ServiceBus
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: servicebus-connection
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi

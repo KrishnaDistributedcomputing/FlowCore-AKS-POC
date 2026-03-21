@@ -1,0 +1,188 @@
+openapi: 3.0.3
+info:
+  title: FlowCore Core Services API
+  version: 1.0.0
+servers:
+  - url: https://api.flowcore.local
+paths:
+  /customers:
+    post:
+      summary: Create customer
+      operationId: createCustomer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Created
+  /customers/{customerId}:
+    get:
+      summary: Get customer
+      operationId: getCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Update customer
+      operationId: updateCustomer
+      parameters:
+        - name: customerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Updated
+  /orders:
+    post:
+      summary: Create case/order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          description: Created
+  /orders/{orderId}:
+    get:
+      summary: Get order details
+      operationId: getOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+  /orders/{orderId}/state:
+    patch:
+      summary: Update order state
+      operationId: updateOrderState
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderStateRequest'
+      responses:
+        '200':
+          description: Updated
+  /rules/validate:
+    post:
+      summary: Validate request
+      operationId: validateRequest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateRequest'
+      responses:
+        '200':
+          description: Validation result
+  /reporting/summary:
+    get:
+      summary: Summary reporting
+      operationId: getSummaryReport
+      responses:
+        '200':
+          description: OK
+  /audit/events:
+    post:
+      summary: Append audit event
+      operationId: appendAuditEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuditEvent'
+      responses:
+        '201':
+          description: Created
+components:
+  schemas:
+    CreateCustomerRequest:
+      type: object
+      required: [firstName, lastName, email]
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+    CreateOrderRequest:
+      type: object
+      required: [customerId, amount]
+      properties:
+        customerId:
+          type: string
+        amount:
+          type: number
+    UpdateOrderStateRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [created, validated, fulfilled, failed]
+    ValidateRequest:
+      type: object
+      required: [requestType, payload]
+      properties:
+        requestType:
+          type: string
+        payload:
+          type: object
+          additionalProperties: true
+    AuditEvent:
+      type: object
+      required: [entityType, entityId, action, performedBy]
+      properties:
+        entityType:
+          type: string
+        entityId:
+          type: string
+        action:
+          type: string
+        performedBy:
+          type: string

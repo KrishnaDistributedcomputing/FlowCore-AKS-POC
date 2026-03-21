@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-service
+  namespace: apps
+  labels:
+    app: customer-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: customer-service
+  template:
+    metadata:
+      labels:
+        app: customer-service
+    spec:
+      nodeSelector:
+        workload: apps
+      containers:
+        - name: customer-service
+          image: ${ACR_LOGIN_SERVER}/flowcore/customer-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ConnectionStrings__CustomerDb
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: customer-db-connection
+            - name: ConnectionStrings__Redis
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: redis-connection
+            - name: ConnectionStrings__ServiceBus
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: servicebus-connection
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 200m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-service
+  namespace: apps
+spec:
+  selector:
+    app: customer-service
+  ports:
+    - port: 80
+      targetPort: 8080
