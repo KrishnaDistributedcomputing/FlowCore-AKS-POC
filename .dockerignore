@@ -1,0 +1,16 @@
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/node_modules/
+**/*.user
+**/*.suo
+**/Thumbs.db
+specs/
+infra/
+deploy/
+.github/
+**/*.md
+**/*.json
+!src/**/*.json
+!src/**/*.csproj

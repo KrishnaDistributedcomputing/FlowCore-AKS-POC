@@ -1,0 +1,100 @@
+@page
+@model FlowCore.Dashboard.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header">
+    <h1>FlowCore AKS POC Dashboard</h1>
+    <p class="subtitle">Microservices architecture on Azure Kubernetes Service — 7 Business Outcome Dimensions</p>
+</div>
+
+<div class="stat-row">
+    <div class="stat-card">
+        <div class="stat-value">@Model.ServiceCount</div>
+        <div class="stat-label">Services Deployed</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@Model.PodCount</div>
+        <div class="stat-label">Running Pods</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@Model.HealthyCount</div>
+        <div class="stat-label">Healthy Services</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@Model.NodeCount</div>
+        <div class="stat-label">AKS Nodes</div>
+    </div>
+</div>
+
+<h2>Business Outcome Dimensions</h2>
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header">1. Modernization</div>
+        <div class="card-body">
+            <p>Monolith to @Model.ServiceCount independent .NET 8 microservices. Each containerized with its own deployment lifecycle. Infrastructure as Code via Bicep.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">2. Cloud-Native Scalability</div>
+        <div class="card-body">
+            <p>3 AKS node pools with autoscaling. Horizontal Pod Autoscalers on all services. Worker pool scales to zero. Redis caching for hot paths.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">3. Delivery Acceleration</div>
+        <div class="card-body">
+            <p>GitHub Actions CI/CD with contract validation, automated builds, and ACR image push. Target: commit to deploy in under 10 minutes.</p>
+            <span class="badge badge-blue">Configured</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">4. User Experience</div>
+        <div class="card-body">
+            <p>API-first design with YARP Gateway. OpenAPI 3.0.3 contracts. Stateless REST APIs accessible from any device or frontend technology.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">5. Cost Optimization</div>
+        <div class="card-body">
+            <p>Burstable SKUs, scale-to-zero workers, environment lifecycle scripts. Cost Service provides real-time Azure pricing and Advisor recommendations.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">6. Architectural Standardization</div>
+        <div class="card-body">
+            <p>4-layer decomposition: Gateway → Services → Data → Integration. Schema-per-service isolation. Contract-first. Observable-by-default.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">7. Integration Modernization</div>
+        <div class="card-body">
+            <p>Azure Service Bus pub-sub replacing batch/FTP. Event-driven with DLQ. Correlation ID tracking across all sync and async flows.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+</div>
+
+<h2>Service Health</h2>
+<table class="data-table">
+    <thead>
+        <tr><th>Service</th><th>Namespace</th><th>Status</th><th>Response</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var svc in Model.Services)
+        {
+            <tr>
+                <td>@svc.Name</td>
+                <td><span class="badge badge-subtle">@svc.Namespace</span></td>
+                <td><span class="badge @(svc.Healthy ? "badge-green" : "badge-red")">@(svc.Healthy ? "Healthy" : "Unhealthy")</span></td>
+                <td>@svc.ResponseTime</td>
+            </tr>
+        }
+    </tbody>
+</table>

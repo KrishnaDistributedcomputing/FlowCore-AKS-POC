@@ -1,0 +1,56 @@
+@page
+@model FlowCore.Dashboard.Pages.DemoModel
+@{
+    ViewData["Title"] = "Live Demo";
+}
+
+<div class="page-header">
+    <h1>Live Demo Flow</h1>
+    <p class="subtitle">End-to-end microservices workflow: Customer → Order → Rules → Events → Audit</p>
+</div>
+
+<div class="demo-flow">
+    @for (int i = 0; i < Model.Steps.Count; i++)
+    {
+        var step = Model.Steps[i];
+        <div class="demo-step @(step.Success ? "step-success" : step.Executed ? "step-error" : "")">
+            <div class="step-number">@(i + 1)</div>
+            <div class="step-content">
+                <h3>@step.Title</h3>
+                <p>@step.Description</p>
+                @if (step.Executed)
+                {
+                    <div class="step-result">
+                        <span class="badge @(step.Success ? "badge-green" : "badge-red")">@(step.Success ? "Success" : "Failed")</span>
+                        <code>@step.ResponseTime — @step.Detail</code>
+                    </div>
+                }
+            </div>
+        </div>
+        @if (i < Model.Steps.Count - 1)
+        {
+            <div class="step-arrow">&#8595;</div>
+        }
+    }
+</div>
+
+<h2>Event Flow</h2>
+<div class="card">
+    <div class="card-body" style="font-family:monospace; font-size:0.85rem; line-height:1.8;">
+        <p>1. POST /customers → CustomerService → publishes <strong>CustomerUpdated</strong> event</p>
+        <p>2. POST /orders → OrderService → calls RulesService for validation</p>
+        <p>3. OrderService publishes <strong>OrderPlaced</strong> + <strong>CaseCreated</strong> events</p>
+        <p>4. NotificationWorker consumes <strong>NotificationRequested</strong> from Service Bus</p>
+        <p>5. AuditWorker records <strong>AuditRecorded</strong> events to audit database</p>
+        <p>6. GET /reporting/summary → ReportingService returns aggregated view</p>
+    </div>
+</div>
+
+<h2>Correlation Tracking</h2>
+<div class="card">
+    <div class="card-body">
+        <p>Every request gets an <code>X-Correlation-ID</code> header injected at the API Gateway.</p>
+        <p>This ID propagates through all synchronous HTTP calls (via CorrelationIdDelegatingHandler) and all asynchronous Service Bus messages (via EventPublisher).</p>
+        <p>End-to-end tracing from initial REST call through every worker is visible in Application Insights.</p>
+    </div>
+</div>

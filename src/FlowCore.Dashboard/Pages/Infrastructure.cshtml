@@ -1,0 +1,83 @@
+@page
+@model FlowCore.Dashboard.Pages.InfrastructureModel
+@{
+    ViewData["Title"] = "Infrastructure";
+}
+
+<div class="page-header">
+    <h1>Azure Infrastructure</h1>
+    <p class="subtitle">All deployed resources in rg-flowcore-poc — Canada Central</p>
+</div>
+
+<div class="stat-row">
+    <div class="stat-card"><div class="stat-value">@Model.Resources.Count</div><div class="stat-label">Resources</div></div>
+    <div class="stat-card"><div class="stat-value">AKS 1.33</div><div class="stat-label">Kubernetes</div></div>
+    <div class="stat-card"><div class="stat-value">3</div><div class="stat-label">Node Pools</div></div>
+    <div class="stat-card"><div class="stat-value">.NET 8</div><div class="stat-label">Runtime</div></div>
+</div>
+
+<h2>Resource Inventory</h2>
+<table class="data-table">
+    <thead>
+        <tr><th>Resource</th><th>Type</th><th>SKU</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var r in Model.Resources)
+        {
+            <tr>
+                <td>@r.Name</td>
+                <td>@r.Type</td>
+                <td><span class="badge badge-subtle">@r.Sku</span></td>
+                <td>@r.Purpose</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2>AKS Cluster Details</h2>
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header">System Pool</div>
+        <div class="card-body">
+            <p><strong>VM Size:</strong> Standard_D2s_v5</p>
+            <p><strong>Nodes:</strong> 1-2 (autoscale)</p>
+            <p><strong>Purpose:</strong> Control plane components</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Application Pool</div>
+        <div class="card-body">
+            <p><strong>VM Size:</strong> Standard_D4s_v5</p>
+            <p><strong>Nodes:</strong> 1-4 (autoscale)</p>
+            <p><strong>Purpose:</strong> API services &amp; Dashboard</p>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Worker Pool</div>
+        <div class="card-body">
+            <p><strong>VM Size:</strong> Standard_D2s_v5</p>
+            <p><strong>Nodes:</strong> 0-3 (scale-to-zero)</p>
+            <p><strong>Purpose:</strong> Background processors</p>
+        </div>
+    </div>
+</div>
+
+<h2>Kubernetes Namespaces</h2>
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header">platform</div>
+        <div class="card-body"><p>API Gateway (2 replicas), Dashboard</p></div>
+    </div>
+    <div class="card">
+        <div class="card-header">apps</div>
+        <div class="card-body"><p>Customer (2), Order (2), Rules, Reporting, Audit, Cost services</p></div>
+    </div>
+    <div class="card">
+        <div class="card-header">workers</div>
+        <div class="card-body"><p>Notification Worker — scale-to-zero capable</p></div>
+    </div>
+    <div class="card">
+        <div class="card-header">observability</div>
+        <div class="card-body"><p>Reserved for monitoring stack</p></div>
+    </div>
+</div>

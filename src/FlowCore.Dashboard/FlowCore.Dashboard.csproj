@@ -3,9 +3,17 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>FlowCore.Dashboard</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.12.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.22.0" />
+  </ItemGroup>
+  <!-- Exclude old Blazor components that are no longer used -->
+  <ItemGroup>
+    <Content Remove="Components\**\*" />
+    <Compile Remove="Components\**\*" />
+    <None Remove="Components\**\*" />
+    <Content Remove="Pages\_Host.cshtml" />
+    <Compile Remove="Services\AzureResourceClient.cs" />
   </ItemGroup>
 </Project>

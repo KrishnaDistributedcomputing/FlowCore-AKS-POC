@@ -1,0 +1,66 @@
+@page
+@model FlowCore.Dashboard.Pages.CostsModel
+@{
+    ViewData["Title"] = "Cost Center";
+}
+
+<div class="page-header">
+    <h1>Cost Management</h1>
+    <p class="subtitle">POC cost optimization levers and estimated monthly spend</p>
+</div>
+
+<div class="stat-row">
+    <div class="stat-card"><div class="stat-value">~$280</div><div class="stat-label">Estimated Monthly (24/7)</div></div>
+    <div class="stat-card"><div class="stat-value">~$112</div><div class="stat-label">With Scale-Down (Business Hours)</div></div>
+    <div class="stat-card"><div class="stat-value">60%</div><div class="stat-label">Off-Hours Savings</div></div>
+    <div class="stat-card"><div class="stat-value">$0</div><div class="stat-label">After Teardown</div></div>
+</div>
+
+<h2>Cost Optimization Levers</h2>
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header">Elastic Scaling</div>
+        <div class="card-body">
+            <p>AKS node autoscaler adjusts VM count based on workload. Worker pool scales to zero when idle — zero compute cost for background processing when not needed.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Right-Sizing</div>
+        <div class="card-body">
+            <p>All resources use the smallest SKU that meets POC requirements. PostgreSQL Burstable B1ms, Redis Basic C1, ACR Basic. Clear upgrade path to production tiers.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Environment Lifecycle</div>
+        <div class="card-body">
+            <p>Three operational scripts: <code>scale-down.sh</code> for off-hours, <code>scale-up.sh</code> for business hours, <code>teardown.sh</code> for full cleanup.</p>
+            <span class="badge badge-blue">Available</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">Managed Services</div>
+        <div class="card-body">
+            <p>Azure handles patching, backups, HA, and security updates for PostgreSQL, Redis, Service Bus, Key Vault. Team focuses on application code only.</p>
+            <span class="badge badge-green">Active</span>
+        </div>
+    </div>
+</div>
+
+<h2>Resource Cost Breakdown</h2>
+<table class="data-table">
+    <thead>
+        <tr><th>Resource</th><th>SKU</th><th>Est. Monthly</th><th>Notes</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>AKS (System + Apps pools)</td><td>D2s_v5 + D4s_v5</td><td>~$180</td><td>Primary compute cost</td></tr>
+        <tr><td>PostgreSQL Flexible</td><td>Burstable B1ms</td><td>~$25</td><td>32GB storage</td></tr>
+        <tr><td>Redis Cache</td><td>Basic C1</td><td>~$25</td><td>1GB cache</td></tr>
+        <tr><td>Service Bus</td><td>Standard</td><td>~$10</td><td>Per-operation pricing</td></tr>
+        <tr><td>Container Registry</td><td>Basic</td><td>~$5</td><td>10GB included</td></tr>
+        <tr><td>Key Vault</td><td>Standard</td><td>~$1</td><td>Per-operation</td></tr>
+        <tr><td>Log Analytics + App Insights</td><td>PerGB</td><td>~$5</td><td>First 5GB free</td></tr>
+        <tr><td><strong>Total (24/7)</strong></td><td></td><td><strong>~$280</strong></td><td></td></tr>
+    </tbody>
+</table>

@@ -1,0 +1,50 @@
+@page
+@model FlowCore.Dashboard.Pages.HealthModel
+@{
+    ViewData["Title"] = "Health";
+}
+
+<div class="page-header">
+    <h1>Service Health Monitor</h1>
+    <p class="subtitle">Real-time health checks via API Gateway probes</p>
+</div>
+
+<div class="card-grid">
+    @foreach (var svc in Model.Services)
+    {
+        <div class="card @(svc.Healthy ? "" : "card-error")">
+            <div class="card-header">@svc.Name</div>
+            <div class="card-body">
+                <p><strong>Namespace:</strong> @svc.Namespace</p>
+                <p><strong>Endpoint:</strong> @svc.Endpoint</p>
+                <p><strong>Status:</strong> <span class="badge @(svc.Healthy ? "badge-green" : "badge-red")">@(svc.Healthy ? "Healthy" : "Degraded")</span></p>
+                <p><strong>Response:</strong> @svc.ResponseTime</p>
+                <p><strong>Replicas:</strong> @svc.Replicas</p>
+            </div>
+        </div>
+    }
+</div>
+
+<h2>Kubernetes Probes</h2>
+<table class="data-table">
+    <thead>
+        <tr><th>Probe</th><th>Path</th><th>Interval</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Readiness</td><td>/healthz</td><td>10s</td><td>Prevents traffic to starting pods</td></tr>
+        <tr><td>Liveness</td><td>/healthz</td><td>20s</td><td>Restarts unresponsive pods</td></tr>
+    </tbody>
+</table>
+
+<h2>Pod Disruption Budgets</h2>
+<table class="data-table">
+    <thead>
+        <tr><th>Service</th><th>Min Available</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>API Gateway</td><td>1</td><td>Always at least 1 pod during node drain</td></tr>
+        <tr><td>Customer Service</td><td>1</td><td>Maintain availability during updates</td></tr>
+        <tr><td>Order Service</td><td>1</td><td>Protect transaction processing</td></tr>
+        <tr><td>Notification Worker</td><td>0</td><td>Can tolerate full restart</td></tr>
+    </tbody>
+</table>

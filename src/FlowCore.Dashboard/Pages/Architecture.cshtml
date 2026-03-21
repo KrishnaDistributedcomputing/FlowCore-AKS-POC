@@ -1,0 +1,67 @@
+@page
+@model FlowCore.Dashboard.Pages.ArchitectureModel
+@{
+    ViewData["Title"] = "Architecture";
+}
+
+<div class="page-header">
+    <h1>System Architecture</h1>
+    <p class="subtitle">4-layer microservices decomposition on AKS</p>
+</div>
+
+<div class="arch-diagram">
+    <div class="arch-layer">
+        <div class="layer-label">Clients</div>
+        <div class="layer-boxes">
+            <div class="arch-box">Web Browser</div>
+            <div class="arch-box">Mobile App</div>
+            <div class="arch-box">CLI / API</div>
+        </div>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-layer highlight">
+        <div class="layer-label">Gateway Layer (platform namespace)</div>
+        <div class="layer-boxes">
+            <div class="arch-box primary">API Gateway (YARP)</div>
+            <div class="arch-box accent">Dashboard</div>
+        </div>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-layer">
+        <div class="layer-label">Service Layer (apps namespace)</div>
+        <div class="layer-boxes">
+            <div class="arch-box">Customer</div>
+            <div class="arch-box">Order</div>
+            <div class="arch-box">Rules</div>
+            <div class="arch-box">Reporting</div>
+            <div class="arch-box">Audit</div>
+            <div class="arch-box">Cost</div>
+        </div>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-layer">
+        <div class="layer-label">Data &amp; Integration Layer</div>
+        <div class="layer-boxes">
+            <div class="arch-box data">PostgreSQL (4 schemas)</div>
+            <div class="arch-box data">Redis Cache</div>
+            <div class="arch-box data">Service Bus</div>
+            <div class="arch-box data">Key Vault</div>
+        </div>
+    </div>
+    <div class="arch-arrow">&#8595;</div>
+    <div class="arch-layer">
+        <div class="layer-label">Worker Layer (workers namespace)</div>
+        <div class="layer-boxes">
+            <div class="arch-box worker">Notification Worker</div>
+        </div>
+    </div>
+</div>
+
+<h2>Design Principles</h2>
+<div class="card-grid">
+    <div class="card"><div class="card-header">Single Responsibility</div><div class="card-body"><p>Each service owns exactly one business domain with a focused API surface.</p></div></div>
+    <div class="card"><div class="card-header">Data Ownership</div><div class="card-body"><p>Schema-per-service isolation. No cross-schema writes. API or event for cross-domain data.</p></div></div>
+    <div class="card"><div class="card-header">Contract-First</div><div class="card-body"><p>OpenAPI 3.0.3 for REST. AsyncAPI 2.6.0 for events. Validated in CI/CD pipeline.</p></div></div>
+    <div class="card"><div class="card-header">Infrastructure as Code</div><div class="card-body"><p>All Azure resources defined in Bicep modules. Reproducible, version-controlled deployments.</p></div></div>
+    <div class="card"><div class="card-header">Observable by Default</div><div class="card-body"><p>Health checks, structured logging, and Application Insights telemetry on every service.</p></div></div>
+</div>
