@@ -1,0 +1,1278 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.41.2.15936",
+      "templateHash": "8246992586922393278"
+    }
+  },
+  "parameters": {
+    "environment": {
+      "type": "string",
+      "defaultValue": "poc",
+      "metadata": {
+        "description": "Environment name"
+      }
+    },
+    "projectPrefix": {
+      "type": "string",
+      "defaultValue": "flowcore",
+      "metadata": {
+        "description": "Project prefix for naming"
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "canadacentral",
+      "metadata": {
+        "description": "Primary Azure region"
+      }
+    },
+    "drLocation": {
+      "type": "string",
+      "defaultValue": "canadaeast",
+      "metadata": {
+        "description": "DR Azure region"
+      }
+    },
+    "vnetAddressPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.0.0/16"
+    },
+    "aksSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.0.0/22"
+    },
+    "servicesSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.4.0/24"
+    },
+    "dbSubnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.100.5.0/24"
+    },
+    "kubernetesVersion": {
+      "type": "string",
+      "defaultValue": "1.29"
+    },
+    "systemNodeCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "appNodeCount": {
+      "type": "int",
+      "defaultValue": 2
+    },
+    "workerNodeCount": {
+      "type": "int",
+      "defaultValue": 1
+    },
+    "systemNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5"
+    },
+    "appNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D4s_v5"
+    },
+    "workerNodeVmSize": {
+      "type": "string",
+      "defaultValue": "Standard_D2s_v5"
+    },
+    "acrSku": {
+      "type": "string",
+      "defaultValue": "Basic"
+    },
+    "redisSku": {
+      "type": "string",
+      "defaultValue": "Basic"
+    },
+    "redisCapacity": {
+      "type": "int",
+      "defaultValue": 1
+    },
+    "postgresqlSku": {
+      "type": "string",
+      "defaultValue": "Standard_B1ms"
+    },
+    "postgresqlStorageSizeGB": {
+      "type": "int",
+      "defaultValue": 32
+    },
+    "postgresAdminLogin": {
+      "type": "securestring"
+    },
+    "serviceBusSku": {
+      "type": "string",
+      "defaultValue": "Standard"
+    }
+  },
+  "variables": {
+    "rgName": "[format('rg-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]",
+    "tags": {
+      "project": "[parameters('projectPrefix')]",
+      "environment": "[parameters('environment')]",
+      "managedBy": "bicep",
+      "module": "main"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2023-07-01",
+      "name": "[variables('rgName')]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "foundation",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "vnetAddressPrefix": {
+            "value": "[parameters('vnetAddressPrefix')]"
+          },
+          "aksSubnetPrefix": {
+            "value": "[parameters('aksSubnetPrefix')]"
+          },
+          "servicesSubnetPrefix": {
+            "value": "[parameters('servicesSubnetPrefix')]"
+          },
+          "dbSubnetPrefix": {
+            "value": "[parameters('dbSubnetPrefix')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "7279187083891073684"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "vnetAddressPrefix": {
+              "type": "string"
+            },
+            "aksSubnetPrefix": {
+              "type": "string"
+            },
+            "servicesSubnetPrefix": {
+              "type": "string"
+            },
+            "dbSubnetPrefix": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "vnetName": "[format('vnet-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Network/virtualNetworks",
+              "apiVersion": "2023-09-01",
+              "name": "[variables('vnetName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'A-foundation'))]",
+              "properties": {
+                "addressSpace": {
+                  "addressPrefixes": [
+                    "[parameters('vnetAddressPrefix')]"
+                  ]
+                },
+                "subnets": [
+                  {
+                    "name": "snet-aks",
+                    "properties": {
+                      "addressPrefix": "[parameters('aksSubnetPrefix')]"
+                    }
+                  },
+                  {
+                    "name": "snet-services",
+                    "properties": {
+                      "addressPrefix": "[parameters('servicesSubnetPrefix')]"
+                    }
+                  },
+                  {
+                    "name": "snet-db",
+                    "properties": {
+                      "addressPrefix": "[parameters('dbSubnetPrefix')]",
+                      "delegations": [
+                        {
+                          "name": "dlg-postgres",
+                          "properties": {
+                            "serviceName": "Microsoft.DBforPostgreSQL/flexibleServers"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}-{1}.private.postgres.database.azure.com', parameters('projectPrefix'), parameters('environment'))]",
+              "location": "global",
+              "tags": "[union(parameters('tags'), createObject('module', 'A-foundation'))]"
+            },
+            {
+              "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
+              "apiVersion": "2020-06-01",
+              "name": "[format('{0}/{1}', format('{0}-{1}.private.postgres.database.azure.com', parameters('projectPrefix'), parameters('environment')), format('link-{0}', variables('vnetName')))]",
+              "location": "global",
+              "properties": {
+                "virtualNetwork": {
+                  "id": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+                },
+                "registrationEnabled": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', format('{0}-{1}.private.postgres.database.azure.com', parameters('projectPrefix'), parameters('environment')))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "vnetName": {
+              "type": "string",
+              "value": "[variables('vnetName')]"
+            },
+            "vnetId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+            },
+            "aksSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '2023-09-01').subnets[0].id]"
+            },
+            "servicesSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '2023-09-01').subnets[1].id]"
+            },
+            "dbSubnetId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '2023-09-01').subnets[2].id]"
+            },
+            "postgresPrivateDnsZoneId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Network/privateDnsZones', format('{0}-{1}.private.postgres.database.azure.com', parameters('projectPrefix'), parameters('environment')))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "keyvault",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "5058061036612764899"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "kvName": "[format('kv-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2023-07-01",
+              "name": "[variables('kvName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'I-security'))]",
+              "properties": {
+                "tenantId": "[subscription().tenantId]",
+                "sku": {
+                  "family": "A",
+                  "name": "standard"
+                },
+                "enableRbacAuthorization": true,
+                "enableSoftDelete": true,
+                "softDeleteRetentionInDays": 7,
+                "enabledForTemplateDeployment": true
+              }
+            }
+          ],
+          "outputs": {
+            "keyVaultName": {
+              "type": "string",
+              "value": "[variables('kvName')]"
+            },
+            "keyVaultId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.KeyVault/vaults', variables('kvName'))]"
+            },
+            "keyVaultUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', variables('kvName')), '2023-07-01').vaultUri]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "observability",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "6709491321138946358"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "lawName": "[format('law-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]",
+            "aiName": "[format('ai-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[variables('lawName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'H-observability'))]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 30
+              }
+            },
+            {
+              "type": "Microsoft.Insights/components",
+              "apiVersion": "2020-02-02",
+              "name": "[variables('aiName')]",
+              "location": "[parameters('location')]",
+              "kind": "web",
+              "tags": "[union(parameters('tags'), createObject('module', 'H-observability'))]",
+              "properties": {
+                "Application_Type": "web",
+                "WorkspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('lawName'))]"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', variables('lawName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "logAnalyticsWorkspaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('lawName'))]"
+            },
+            "logAnalyticsWorkspaceName": {
+              "type": "string",
+              "value": "[variables('lawName')]"
+            },
+            "appInsightsConnectionString": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('aiName')), '2020-02-02').ConnectionString]"
+            },
+            "appInsightsInstrumentationKey": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('aiName')), '2020-02-02').InstrumentationKey]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "aks",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "kubernetesVersion": {
+            "value": "[parameters('kubernetesVersion')]"
+          },
+          "aksSubnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'foundation'), '2025-04-01').outputs.aksSubnetId.value]"
+          },
+          "systemNodeCount": {
+            "value": "[parameters('systemNodeCount')]"
+          },
+          "appNodeCount": {
+            "value": "[parameters('appNodeCount')]"
+          },
+          "workerNodeCount": {
+            "value": "[parameters('workerNodeCount')]"
+          },
+          "systemNodeVmSize": {
+            "value": "[parameters('systemNodeVmSize')]"
+          },
+          "appNodeVmSize": {
+            "value": "[parameters('appNodeVmSize')]"
+          },
+          "workerNodeVmSize": {
+            "value": "[parameters('workerNodeVmSize')]"
+          },
+          "logAnalyticsWorkspaceId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'observability'), '2025-04-01').outputs.logAnalyticsWorkspaceId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "811955247938688811"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "kubernetesVersion": {
+              "type": "string"
+            },
+            "aksSubnetId": {
+              "type": "string"
+            },
+            "systemNodeCount": {
+              "type": "int"
+            },
+            "appNodeCount": {
+              "type": "int"
+            },
+            "workerNodeCount": {
+              "type": "int"
+            },
+            "systemNodeVmSize": {
+              "type": "string"
+            },
+            "appNodeVmSize": {
+              "type": "string"
+            },
+            "workerNodeVmSize": {
+              "type": "string"
+            },
+            "logAnalyticsWorkspaceId": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "aksName": "[format('aks-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerService/managedClusters",
+              "apiVersion": "2024-01-01",
+              "name": "[variables('aksName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'B-aks-platform'))]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "dnsPrefix": "[format('{0}-{1}', parameters('projectPrefix'), parameters('environment'))]",
+                "kubernetesVersion": "[parameters('kubernetesVersion')]",
+                "networkProfile": {
+                  "networkPlugin": "azure",
+                  "networkPolicy": "azure",
+                  "serviceCidr": "10.200.0.0/16",
+                  "dnsServiceIP": "10.200.0.10"
+                },
+                "agentPoolProfiles": [
+                  {
+                    "name": "system",
+                    "mode": "System",
+                    "count": "[parameters('systemNodeCount')]",
+                    "vmSize": "[parameters('systemNodeVmSize')]",
+                    "osType": "Linux",
+                    "vnetSubnetID": "[parameters('aksSubnetId')]",
+                    "enableAutoScaling": true,
+                    "minCount": 1,
+                    "maxCount": "[add(parameters('systemNodeCount'), 1)]"
+                  },
+                  {
+                    "name": "apps",
+                    "mode": "User",
+                    "count": "[parameters('appNodeCount')]",
+                    "vmSize": "[parameters('appNodeVmSize')]",
+                    "osType": "Linux",
+                    "vnetSubnetID": "[parameters('aksSubnetId')]",
+                    "enableAutoScaling": true,
+                    "minCount": 1,
+                    "maxCount": "[add(parameters('appNodeCount'), 2)]",
+                    "nodeTaints": [],
+                    "nodeLabels": {
+                      "workload": "apps"
+                    }
+                  },
+                  {
+                    "name": "workers",
+                    "mode": "User",
+                    "count": "[parameters('workerNodeCount')]",
+                    "vmSize": "[parameters('workerNodeVmSize')]",
+                    "osType": "Linux",
+                    "vnetSubnetID": "[parameters('aksSubnetId')]",
+                    "enableAutoScaling": true,
+                    "minCount": 0,
+                    "maxCount": "[add(parameters('workerNodeCount'), 2)]",
+                    "nodeLabels": {
+                      "workload": "workers"
+                    }
+                  }
+                ],
+                "addonProfiles": {
+                  "omsagent": {
+                    "enabled": true,
+                    "config": {
+                      "logAnalyticsWorkspaceResourceID": "[parameters('logAnalyticsWorkspaceId')]"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "aksClusterName": {
+              "type": "string",
+              "value": "[variables('aksName')]"
+            },
+            "aksClusterId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ContainerService/managedClusters', variables('aksName'))]"
+            },
+            "kubeletIdentityObjectId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerService/managedClusters', variables('aksName')), '2024-01-01').identityProfile.kubeletidentity.objectId]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'foundation')]",
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'observability')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "acr",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "acrSku": {
+            "value": "[parameters('acrSku')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "15460453732417538647"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "acrSku": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "acrName": "[replace(format('acr{0}{1}', parameters('projectPrefix'), parameters('environment')), '-', '')]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ContainerRegistry/registries",
+              "apiVersion": "2023-07-01",
+              "name": "[variables('acrName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'C-shared-services'))]",
+              "sku": {
+                "name": "[parameters('acrSku')]"
+              },
+              "properties": {
+                "adminUserEnabled": false
+              }
+            }
+          ],
+          "outputs": {
+            "acrName": {
+              "type": "string",
+              "value": "[variables('acrName')]"
+            },
+            "acrLoginServer": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ContainerRegistry/registries', variables('acrName')), '2023-07-01').loginServer]"
+            },
+            "acrId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ContainerRegistry/registries', variables('acrName'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "redis",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "redisSku": {
+            "value": "[parameters('redisSku')]"
+          },
+          "redisCapacity": {
+            "value": "[parameters('redisCapacity')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "13376109247980211784"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "redisSku": {
+              "type": "string"
+            },
+            "redisCapacity": {
+              "type": "int"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "redisName": "[format('redis-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Cache/redis",
+              "apiVersion": "2023-08-01",
+              "name": "[variables('redisName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'C-shared-services'))]",
+              "properties": {
+                "sku": {
+                  "name": "[parameters('redisSku')]",
+                  "family": "[if(equals(parameters('redisSku'), 'Premium'), 'P', 'C')]",
+                  "capacity": "[parameters('redisCapacity')]"
+                },
+                "enableNonSslPort": false,
+                "minimumTlsVersion": "1.2"
+              }
+            }
+          ],
+          "outputs": {
+            "redisName": {
+              "type": "string",
+              "value": "[variables('redisName')]"
+            },
+            "redisHostName": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2023-08-01').hostName]"
+            },
+            "redisPort": {
+              "type": "int",
+              "value": "[reference(resourceId('Microsoft.Cache/redis', variables('redisName')), '2023-08-01').sslPort]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "postgresql",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "postgresqlSku": {
+            "value": "[parameters('postgresqlSku')]"
+          },
+          "storageSizeGB": {
+            "value": "[parameters('postgresqlStorageSizeGB')]"
+          },
+          "adminLogin": {
+            "value": "[parameters('postgresAdminLogin')]"
+          },
+          "dbSubnetId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'foundation'), '2025-04-01').outputs.dbSubnetId.value]"
+          },
+          "privateDnsZoneId": {
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'foundation'), '2025-04-01').outputs.postgresPrivateDnsZoneId.value]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "17741173870023310376"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "postgresqlSku": {
+              "type": "string"
+            },
+            "storageSizeGB": {
+              "type": "int"
+            },
+            "adminLogin": {
+              "type": "securestring"
+            },
+            "dbSubnetId": {
+              "type": "string"
+            },
+            "privateDnsZoneId": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "serverName": "[format('psql-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[variables('serverName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'D-data-layer'))]",
+              "sku": {
+                "name": "[parameters('postgresqlSku')]",
+                "tier": "Burstable"
+              },
+              "properties": {
+                "version": "16",
+                "administratorLogin": "[parameters('adminLogin')]",
+                "administratorLoginPassword": "[format('P@ss{0}!1', uniqueString(variables('serverName')))]",
+                "storage": {
+                  "storageSizeGB": "[parameters('storageSizeGB')]"
+                },
+                "network": {
+                  "delegatedSubnetResourceId": "[parameters('dbSubnetId')]",
+                  "privateDnsZoneArmResourceId": "[parameters('privateDnsZoneId')]"
+                },
+                "highAvailability": {
+                  "mode": "Disabled"
+                },
+                "backup": {
+                  "backupRetentionDays": 7,
+                  "geoRedundantBackup": "Disabled"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[format('{0}/{1}', variables('serverName'), 'flowcore_customer')]",
+              "properties": {
+                "charset": "UTF8",
+                "collation": "en_US.utf8"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('serverName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[format('{0}/{1}', variables('serverName'), 'flowcore_caseorder')]",
+              "properties": {
+                "charset": "UTF8",
+                "collation": "en_US.utf8"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('serverName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[format('{0}/{1}', variables('serverName'), 'flowcore_reporting')]",
+              "properties": {
+                "charset": "UTF8",
+                "collation": "en_US.utf8"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('serverName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.DBforPostgreSQL/flexibleServers/databases",
+              "apiVersion": "2023-06-01-preview",
+              "name": "[format('{0}/{1}', variables('serverName'), 'flowcore_audit')]",
+              "properties": {
+                "charset": "UTF8",
+                "collation": "en_US.utf8"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('serverName'))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "fqdn": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.DBforPostgreSQL/flexibleServers', variables('serverName')), '2023-06-01-preview').fullyQualifiedDomainName]"
+            },
+            "serverName": {
+              "type": "string",
+              "value": "[variables('serverName')]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'foundation')]",
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "servicebus",
+      "resourceGroup": "[variables('rgName')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "projectPrefix": {
+            "value": "[parameters('projectPrefix')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          },
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "serviceBusSku": {
+            "value": "[parameters('serviceBusSku')]"
+          },
+          "tags": {
+            "value": "[variables('tags')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.41.2.15936",
+              "templateHash": "3426180688916968014"
+            }
+          },
+          "parameters": {
+            "projectPrefix": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            },
+            "serviceBusSku": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "object"
+            }
+          },
+          "variables": {
+            "sbName": "[format('sb-{0}-{1}', parameters('projectPrefix'), parameters('environment'))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ServiceBus/namespaces",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[variables('sbName')]",
+              "location": "[parameters('location')]",
+              "tags": "[union(parameters('tags'), createObject('module', 'E-messaging'))]",
+              "sku": {
+                "name": "[parameters('serviceBusSku')]",
+                "tier": "[parameters('serviceBusSku')]"
+              }
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}', variables('sbName'), 'flowcore-events')]",
+              "properties": {
+                "maxSizeInMegabytes": 1024,
+                "defaultMessageTimeToLive": "P7D",
+                "enablePartitioning": false
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('sbName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}/{2}', variables('sbName'), 'flowcore-events', 'notification-worker')]",
+              "properties": {
+                "maxDeliveryCount": 5,
+                "deadLetteringOnMessageExpiration": true,
+                "lockDuration": "PT1M",
+                "defaultMessageTimeToLive": "P3D"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('sbName'), 'flowcore-events')]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}/{2}/{3}', variables('sbName'), 'flowcore-events', 'notification-worker', 'notification-filter')]",
+              "properties": {
+                "filterType": "CorrelationFilter",
+                "correlationFilter": {
+                  "label": "NotificationRequested"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('sbName'), 'flowcore-events', 'notification-worker')]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}/{2}', variables('sbName'), 'flowcore-events', 'projection-worker')]",
+              "properties": {
+                "maxDeliveryCount": 5,
+                "deadLetteringOnMessageExpiration": true,
+                "lockDuration": "PT1M",
+                "defaultMessageTimeToLive": "P3D"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('sbName'), 'flowcore-events')]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}/{2}', variables('sbName'), 'flowcore-events', 'audit-worker')]",
+              "properties": {
+                "maxDeliveryCount": 10,
+                "deadLetteringOnMessageExpiration": true,
+                "lockDuration": "PT1M",
+                "defaultMessageTimeToLive": "P7D"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics', variables('sbName'), 'flowcore-events')]"
+              ]
+            },
+            {
+              "type": "Microsoft.ServiceBus/namespaces/topics/subscriptions/rules",
+              "apiVersion": "2022-10-01-preview",
+              "name": "[format('{0}/{1}/{2}/{3}', variables('sbName'), 'flowcore-events', 'audit-worker', 'audit-filter')]",
+              "properties": {
+                "filterType": "CorrelationFilter",
+                "correlationFilter": {
+                  "label": "AuditRecorded"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces/topics/subscriptions', variables('sbName'), 'flowcore-events', 'audit-worker')]"
+              ]
+            }
+          ],
+          "outputs": {
+            "namespaceName": {
+              "type": "string",
+              "value": "[variables('sbName')]"
+            },
+            "namespaceId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ServiceBus/namespaces', variables('sbName'))]"
+            },
+            "topicName": {
+              "type": "string",
+              "value": "flowcore-events"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('rgName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "resourceGroupName": {
+      "type": "string",
+      "value": "[variables('rgName')]"
+    },
+    "vnetName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'foundation'), '2025-04-01').outputs.vnetName.value]"
+    },
+    "aksClusterName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'aks'), '2025-04-01').outputs.aksClusterName.value]"
+    },
+    "acrLoginServer": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'acr'), '2025-04-01').outputs.acrLoginServer.value]"
+    },
+    "postgresqlFqdn": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'postgresql'), '2025-04-01').outputs.fqdn.value]"
+    },
+    "serviceBusNamespace": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'servicebus'), '2025-04-01').outputs.namespaceName.value]"
+    },
+    "keyVaultName": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'keyvault'), '2025-04-01').outputs.keyVaultName.value]"
+    },
+    "appInsightsConnectionString": {
+      "type": "string",
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('rgName')), 'Microsoft.Resources/deployments', 'observability'), '2025-04-01').outputs.appInsightsConnectionString.value]"
+    }
+  }
+}

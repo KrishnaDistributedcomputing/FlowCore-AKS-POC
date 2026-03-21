@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowCore.NotificationWorker
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowCore.CostService", "src\FlowCore.CostService\FlowCore.CostService.csproj", "{A1B2C3D4-1111-2222-3333-44445555666E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlowCore.Dashboard", "src\FlowCore.Dashboard\FlowCore.Dashboard.csproj", "{A1B2C3D4-1111-2222-3333-44445555666F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,5 +65,9 @@ Global
 		{A1B2C3D4-1111-2222-3333-44445555666E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A1B2C3D4-1111-2222-3333-44445555666E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A1B2C3D4-1111-2222-3333-44445555666E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555666F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555666F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555666F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555666F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

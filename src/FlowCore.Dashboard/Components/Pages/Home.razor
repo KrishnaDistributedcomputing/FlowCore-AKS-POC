@@ -1,0 +1,164 @@
+@page "/"
+@inject FlowCoreApiClient Api
+
+<div class="page-header">
+    <h1>FlowCore AKS POC Dashboard</h1>
+    <p>Business outcomes across 7 dimensions — real-time status from deployed microservices</p>
+</div>
+
+<div class="stat-row">
+    <div class="stat-box">
+        <div class="stat-number text-blue">9</div>
+        <div class="stat-label">Microservices</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number text-green">@_healthyCount / 7</div>
+        <div class="stat-label">Services Healthy</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number text-purple">13</div>
+        <div class="stat-label">Azure Resources</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number text-orange">15</div>
+        <div class="stat-label">Spec Modules</div>
+    </div>
+    <div class="stat-box">
+        <div class="stat-number text-cyan">K8s 1.33</div>
+        <div class="stat-label">AKS Version</div>
+    </div>
+</div>
+
+<h2 class="section-title">Business Outcome Dimensions</h2>
+
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">🔄</span>
+            <span class="card-title">1. Modernization</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            Monolith decomposed into 6 independent .NET 8 microservices. Schema-per-service data isolation.
+            Infrastructure-as-Code via Bicep.
+        </p>
+        <span class="badge badge-module">Modules A, F</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">📈</span>
+            <span class="card-title">2. Cloud-Native Scalability</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            3 autoscaling node pools, HPAs on every service. Worker pool scales to zero.
+            Pod Disruption Budgets maintain availability.
+        </p>
+        <span class="badge badge-module">Modules B, C</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">🚀</span>
+            <span class="card-title">3. Delivery Acceleration</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            GitHub Actions CI/CD — contract validation, build, push to ACR, deploy to AKS.
+            Target: commit to deploy in under 10 minutes.
+        </p>
+        <span class="badge badge-module">Modules C, J</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">🖥️</span>
+            <span class="card-title">4. UX Transformation</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            API-first design. YARP reverse proxy gateway. OpenAPI 3.0.3 contracts.
+            Any frontend can integrate — web, mobile, CLI.
+        </p>
+        <span class="badge badge-module">Module F (Gateway)</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">💰</span>
+            <span class="card-title">5. Cost Optimization</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            Burstable SKUs, elastic scaling, scale-to-zero workers. Environment lifecycle scripts.
+            Real-time cost estimation via Azure Retail Prices API.
+        </p>
+        <span class="badge badge-module">Modules A-E, M</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">🏛️</span>
+            <span class="card-title">6. Architectural Standardization</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            4-layer decomposition: Gateway, Services, Data, Integration. Contract-first design.
+            Single responsibility per service. Observable by default.
+        </p>
+        <span class="badge badge-module">Modules D, E, F</span>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <span class="card-icon">🔗</span>
+            <span class="card-title">7. Integration Modernization</span>
+        </div>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:0.75rem;">
+            Event-driven pub/sub via Azure Service Bus. 5 domain event types. DLQ with retry.
+            Correlation tracking spans sync and async flows end-to-end.
+        </p>
+        <span class="badge badge-module">Modules E, G</span>
+    </div>
+</div>
+
+<h2 class="section-title">Quick Service Health</h2>
+
+@if (_healthChecks == null)
+{
+    <div class="loading"><div class="spinner"></div><br/>Checking services...</div>
+}
+else
+{
+    <table class="data-table">
+        <thead><tr><th>Service</th><th>Status</th><th>Response</th><th>Checked</th></tr></thead>
+        <tbody>
+            @foreach (var svc in _healthChecks)
+            {
+                <tr>
+                    <td>@svc.ServiceName</td>
+                    <td><span class="badge @GetBadgeClass(svc.Status)">@svc.Status</span></td>
+                    <td>@(svc.ResponseTimeMs >= 0 ? $"{svc.ResponseTimeMs}ms" : "—")</td>
+                    <td style="color:var(--text-secondary);">@svc.LastChecked.ToString("HH:mm:ss")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ServiceHealthDto>? _healthChecks;
+    private int _healthyCount;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _healthChecks = await Api.CheckAllServicesHealthAsync();
+            _healthyCount = _healthChecks.Count(h => h.Status == "Healthy");
+            StateHasChanged();
+        }
+    }
+
+    private string GetBadgeClass(string status) => status switch
+    {
+        "Healthy" => "badge-healthy",
+        "Degraded" => "badge-degraded",
+        _ => "badge-unhealthy"
+    };
+}

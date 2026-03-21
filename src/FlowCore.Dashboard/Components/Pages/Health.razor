@@ -1,0 +1,157 @@
+@page "/health"
+@inject FlowCoreApiClient Api
+
+<div class="page-header">
+    <h1>Service Health Monitor</h1>
+    <p>Real-time health checks across all FlowCore microservices</p>
+</div>
+
+<div style="margin-bottom:1.5rem;">
+    <button class="btn btn-primary" @onclick="RefreshHealth" disabled="@_loading">
+        @(_loading ? "Checking..." : "🔄 Refresh All")
+    </button>
+</div>
+
+@if (_healthChecks == null)
+{
+    <div class="loading"><div class="spinner"></div><br/>Running health checks...</div>
+}
+else
+{
+    <div class="stat-row">
+        <div class="stat-box">
+            <div class="stat-number text-green">@_healthChecks.Count(h => h.Status == "Healthy")</div>
+            <div class="stat-label">Healthy</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number text-orange">@_healthChecks.Count(h => h.Status == "Degraded")</div>
+            <div class="stat-label">Degraded</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number text-red">@_healthChecks.Count(h => h.Status == "Unreachable")</div>
+            <div class="stat-label">Unreachable</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number text-blue">@(_healthChecks.Where(h => h.ResponseTimeMs > 0).Select(h => h.ResponseTimeMs).DefaultIfEmpty(0).Average().ToString("N0"))ms</div>
+            <div class="stat-label">Avg Response</div>
+        </div>
+    </div>
+
+    <div class="card-grid">
+        @foreach (var svc in _healthChecks)
+        {
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-icon">@GetIcon(svc.ServiceName)</span>
+                    <span class="card-title">@svc.ServiceName</span>
+                    <span class="badge @GetBadgeClass(svc.Status)" style="margin-left:auto;">@svc.Status</span>
+                </div>
+                <div style="display:flex;gap:2rem;">
+                    <div>
+                        <div class="card-label">Response Time</div>
+                        <div class="@GetTimeColor(svc.ResponseTimeMs)" style="font-size:1.25rem;font-weight:700;">
+                            @(svc.ResponseTimeMs >= 0 ? $"{svc.ResponseTimeMs}ms" : "—")
+                        </div>
+                    </div>
+                    <div>
+                        <div class="card-label">Last Checked</div>
+                        <div style="font-size:1rem;">@svc.LastChecked.ToString("HH:mm:ss UTC")</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <h3 class="section-title" style="margin-top:2rem;">Health Check Endpoints</h3>
+    <table class="data-table">
+        <thead><tr><th>Service</th><th>Endpoint</th><th>Namespace</th><th>Port</th><th>Checks</th></tr></thead>
+        <tbody>
+            <tr><td>API Gateway</td><td>/healthz</td><td>platform</td><td>8080</td><td>Self</td></tr>
+            <tr><td>Customer Service</td><td>/healthz</td><td>apps</td><td>8080</td><td>PostgreSQL, Redis</td></tr>
+            <tr><td>Order Service</td><td>/healthz</td><td>apps</td><td>8080</td><td>PostgreSQL</td></tr>
+            <tr><td>Rules Service</td><td>/healthz</td><td>apps</td><td>8080</td><td>Self</td></tr>
+            <tr><td>Reporting Service</td><td>/healthz</td><td>apps</td><td>8080</td><td>PostgreSQL, Redis</td></tr>
+            <tr><td>Audit Service</td><td>/healthz</td><td>apps</td><td>8080</td><td>PostgreSQL</td></tr>
+            <tr><td>Cost Service</td><td>/healthz</td><td>apps</td><td>8080</td><td>Self</td></tr>
+        </tbody>
+    </table>
+
+    <h3 class="section-title" style="margin-top:2rem;">Kubernetes Probes</h3>
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">✅</span>
+                <span class="card-title">Readiness Probes</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                HTTP GET /healthz on port 8080. Initial delay: 5-10s, period: 10s.
+                Prevents traffic to pods still starting or with broken DB connections.
+            </p>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">💓</span>
+                <span class="card-title">Liveness Probes</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                HTTP GET /healthz on port 8080. Initial delay: 10-20s, period: 20s.
+                Restarts pods in unhealthy state. Self-healing without manual intervention.
+            </p>
+        </div>
+        <div class="card">
+            <div class="card-header">
+                <span class="card-icon">🛡️</span>
+                <span class="card-title">Pod Disruption Budgets</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                minAvailable: 1 on API Gateway, Customer Service, Order Service, and Notification Worker.
+                Ensures availability during node upgrades and drains.
+            </p>
+        </div>
+    </div>
+}
+
+@code {
+    private List<ServiceHealthDto>? _healthChecks;
+    private bool _loading;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await RefreshHealth();
+    }
+
+    private async Task RefreshHealth()
+    {
+        _loading = true;
+        StateHasChanged();
+        _healthChecks = await Api.CheckAllServicesHealthAsync();
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private string GetBadgeClass(string status) => status switch
+    {
+        "Healthy" => "badge-healthy",
+        "Degraded" => "badge-degraded",
+        _ => "badge-unhealthy"
+    };
+
+    private string GetIcon(string name) => name switch
+    {
+        "API Gateway" => "🚪",
+        "Customer Service" => "👤",
+        "Order Service" => "📋",
+        "Rules Service" => "✅",
+        "Reporting Service" => "📊",
+        "Audit Service" => "📝",
+        "Cost Service" => "💰",
+        _ => "🔧"
+    };
+
+    private string GetTimeColor(long ms)
+    {
+        if (ms < 100) return "text-green";
+        if (ms < 500) return "text-orange";
+        return "text-red";
+    }
+}

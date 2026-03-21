@@ -24,7 +24,7 @@ param servicesSubnetPrefix string = '10.100.4.0/24'
 param dbSubnetPrefix string = '10.100.5.0/24'
 
 // ── AKS ──
-param kubernetesVersion string = '1.29'
+param kubernetesVersion string = '1.33'
 param systemNodeCount int = 2
 param appNodeCount int = 2
 param workerNodeCount int = 1

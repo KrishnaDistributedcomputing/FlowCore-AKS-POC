@@ -4,8 +4,10 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
+COPY ["src/FlowCore.Shared/FlowCore.Shared.csproj", "FlowCore.Shared/"]
 COPY ["src/FlowCore.RulesService/FlowCore.RulesService.csproj", "FlowCore.RulesService/"]
 RUN dotnet restore "FlowCore.RulesService/FlowCore.RulesService.csproj"
+COPY src/FlowCore.Shared/ FlowCore.Shared/
 COPY src/FlowCore.RulesService/ FlowCore.RulesService/
 WORKDIR /src/FlowCore.RulesService
 RUN dotnet publish -c Release -o /app/publish --no-restore

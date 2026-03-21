@@ -1,0 +1,98 @@
+@page "/infrastructure"
+@inject AzureResourceClient AzureClient
+
+<div class="page-header">
+    <h1>Infrastructure Inventory</h1>
+    <p>Live Azure resources deployed in rg-flowcore-poc (Canada Central)</p>
+</div>
+
+@if (_resources == null)
+{
+    <div class="loading"><div class="spinner"></div><br/>Loading Azure resources...</div>
+}
+else
+{
+    <div class="stat-row">
+        <div class="stat-box">
+            <div class="stat-number text-blue">@_resources.Count</div>
+            <div class="stat-label">Total Resources</div>
+        </div>
+        @foreach (var cat in _resources.GroupBy(r => r.Category).OrderBy(g => g.Key))
+        {
+            <div class="stat-box">
+                <div class="stat-number text-cyan">@cat.Count()</div>
+                <div class="stat-label">@cat.Key</div>
+            </div>
+        }
+    </div>
+
+    @foreach (var group in _resources.GroupBy(r => r.Category).OrderBy(g => g.Key))
+    {
+        <h3 class="section-title">@group.Key</h3>
+        <table class="data-table">
+            <thead><tr><th></th><th>Name</th><th>Type</th><th>SKU</th><th>Location</th><th>Module</th></tr></thead>
+            <tbody>
+                @foreach (var res in group)
+                {
+                    <tr>
+                        <td>@res.Icon</td>
+                        <td><strong>@res.Name</strong></td>
+                        <td style="color:var(--text-secondary);font-size:0.85rem;">@res.Type.Split('/').Last()</td>
+                        <td>@(res.Sku ?? "—")</td>
+                        <td>@res.Location</td>
+                        <td><span class="badge badge-module">@res.Module</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (_aksDetails != null)
+    {
+        <h3 class="section-title">AKS Cluster Details</h3>
+        <div class="card" style="margin-bottom:1.5rem;">
+            <div class="card-header">
+                <span class="card-icon">☸️</span>
+                <span class="card-title">@_aksDetails.Name</span>
+                <span class="badge badge-healthy" style="margin-left:auto;">@_aksDetails.PowerState</span>
+            </div>
+            <p style="color:var(--text-secondary);margin-bottom:1rem;">
+                Kubernetes @_aksDetails.KubernetesVersion &nbsp;|&nbsp; FQDN: @_aksDetails.Fqdn
+            </p>
+            <table class="data-table">
+                <thead><tr><th>Pool</th><th>VM Size</th><th>Current</th><th>Min</th><th>Max</th><th>Mode</th></tr></thead>
+                <tbody>
+                    @foreach (var pool in _aksDetails.NodePools)
+                    {
+                        <tr>
+                            <td><strong>@pool.Name</strong></td>
+                            <td>@pool.VmSize</td>
+                            <td class="text-green">@pool.Count</td>
+                            <td>@pool.MinCount</td>
+                            <td>@pool.MaxCount</td>
+                            <td>@pool.Mode</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private List<AzureResourceDto>? _resources;
+    private AksClusterDto? _aksDetails;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var resourceTask = AzureClient.GetResourcesAsync();
+            var aksTask = AzureClient.GetAksDetailsAsync();
+            await Task.WhenAll(resourceTask, aksTask);
+            _resources = resourceTask.Result;
+            _aksDetails = aksTask.Result;
+            StateHasChanged();
+        }
+    }
+}

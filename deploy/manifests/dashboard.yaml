@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard
+  namespace: platform
+  labels:
+    app: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      nodeSelector:
+        workload: apps
+      containers:
+        - name: dashboard
+          image: ${ACR_LOGIN_SERVER}/flowcore/dashboard:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ApiGateway__BaseUrl
+              value: "http://api-gateway.platform.svc.cluster.local"
+            - name: Azure__SubscriptionId
+              value: "e62428e7-08dd-4bc2-82e2-2c51586d9105"
+            - name: Azure__ResourceGroup
+              value: "rg-flowcore-poc"
+            - name: Azure__TenantId
+              value: "16b3c013-d300-468d-ac64-7eda0820b6d3"
+            - name: APPLICATIONINSIGHTS__CONNECTIONSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: appinsights-connection-string
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard
+  namespace: platform
+spec:
+  type: LoadBalancer
+  selector:
+    app: dashboard
+  ports:
+    - port: 80
+      targetPort: 8080

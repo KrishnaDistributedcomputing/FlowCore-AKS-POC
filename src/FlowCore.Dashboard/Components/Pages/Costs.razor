@@ -1,0 +1,134 @@
+@page "/costs"
+@inject FlowCoreApiClient Api
+
+<div class="page-header">
+    <h1>Cost Center</h1>
+    <p>Real-time cost estimation from Azure Retail Prices API, Advisor recommendations, and optimization analysis</p>
+</div>
+
+<div class="two-col">
+    <div>
+        <h3 class="section-title">Monthly Cost Estimate – Canada Central</h3>
+        @if (_estimate == null)
+        {
+            <div class="loading"><div class="spinner"></div><br/>Fetching pricing...</div>
+        }
+        else
+        {
+            <div class="card" style="margin-bottom:1.25rem;">
+                <div class="card-value text-green">$@_estimate.TotalMonthly.ToString("N2") <span style="font-size:0.9rem;color:var(--text-secondary);">/month</span></div>
+                <div class="card-label">Estimated POC infrastructure cost</div>
+            </div>
+
+            @if (_estimate.LineItems != null)
+            {
+                <table class="data-table">
+                    <thead><tr><th>Resource</th><th>SKU</th><th>Monthly</th></tr></thead>
+                    <tbody>
+                        @foreach (var item in _estimate.LineItems)
+                        {
+                            <tr>
+                                <td>@item.ResourceType</td>
+                                <td style="color:var(--text-secondary);">@item.Sku</td>
+                                <td class="text-green">$@item.MonthlyCost.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        }
+    </div>
+
+    <div>
+        <h3 class="section-title">Cost Optimization Levers</h3>
+        <div class="card" style="margin-bottom:0.75rem;">
+            <div class="card-header">
+                <span class="card-icon">📉</span>
+                <span class="card-title">Elastic Scaling</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                AKS node autoscaler adjusts VMs per pool. Worker pool scales to <strong class="text-green">zero</strong> when idle.
+            </p>
+        </div>
+        <div class="card" style="margin-bottom:0.75rem;">
+            <div class="card-header">
+                <span class="card-icon">🕐</span>
+                <span class="card-title">Environment Lifecycle</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                scale-down.sh saves ~60% off-hours. teardown.sh destroys entire RG. scale-up.sh restores capacity.
+            </p>
+        </div>
+        <div class="card" style="margin-bottom:0.75rem;">
+            <div class="card-header">
+                <span class="card-icon">📐</span>
+                <span class="card-title">Right-Sized SKUs</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                PostgreSQL Burstable B1ms, Redis Basic C1, ACR Basic. Smallest tier that meets POC needs.
+            </p>
+        </div>
+        <div class="card" style="margin-bottom:0.75rem;">
+            <div class="card-header">
+                <span class="card-icon">☁️</span>
+                <span class="card-title">Managed Services</span>
+            </div>
+            <p style="color:var(--text-secondary);font-size:0.85rem;">
+                Azure manages patching, backups, and HA for PostgreSQL, Redis, Service Bus, and Key Vault.
+            </p>
+        </div>
+    </div>
+</div>
+
+<h3 class="section-title" style="margin-top:2rem;">Azure Advisor Recommendations</h3>
+@if (_advisorLoading)
+{
+    <div class="loading"><div class="spinner"></div><br/>Querying Advisor...</div>
+}
+else if (_advisorResult != null)
+{
+    <div class="card">
+        <pre style="color:var(--text-secondary);font-size:0.85rem;white-space:pre-wrap;">@System.Text.Json.JsonSerializer.Serialize(_advisorResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
+    </div>
+}
+else
+{
+    <div class="card"><p style="color:var(--text-secondary);">Advisor requires Azure AD authentication. Connect via Managed Identity when deployed to AKS.</p></div>
+}
+
+<h3 class="section-title" style="margin-top:2rem;">Optimization Engine Analysis</h3>
+@if (_optimizationLoading)
+{
+    <div class="loading"><div class="spinner"></div><br/>Analyzing...</div>
+}
+else if (_optimizationResult != null)
+{
+    <div class="card">
+        <pre style="color:var(--text-secondary);font-size:0.85rem;white-space:pre-wrap;">@System.Text.Json.JsonSerializer.Serialize(_optimizationResult, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
+    </div>
+}
+
+@code {
+    private CostEstimateDto? _estimate;
+    private object? _advisorResult;
+    private object? _optimizationResult;
+    private bool _advisorLoading = true;
+    private bool _optimizationLoading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _estimate = await Api.GetCostEstimateAsync();
+            StateHasChanged();
+
+            _advisorResult = await Api.GetAdvisorRecommendationsAsync();
+            _advisorLoading = false;
+            StateHasChanged();
+
+            _optimizationResult = await Api.GetOptimizationAnalysisAsync();
+            _optimizationLoading = false;
+            StateHasChanged();
+        }
+    }
+}

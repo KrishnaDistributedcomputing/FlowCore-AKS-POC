@@ -1,0 +1,142 @@
+@page "/architecture"
+
+<div class="page-header">
+    <h1>Architecture Overview</h1>
+    <p>4-layer decomposition: Gateway → Services → Data → Integration</p>
+</div>
+
+<div class="arch-layer">
+    <div class="layer-title">External Clients</div>
+    <div class="service-chips">
+        <div class="service-chip">🌐 Web Browser</div>
+        <div class="service-chip">📱 Mobile App</div>
+        <div class="service-chip">⌨️ CLI / SDK</div>
+        <div class="service-chip">🔌 Third-Party API</div>
+    </div>
+</div>
+
+<div class="flow-arrow">▼</div>
+
+<div class="arch-layer">
+    <div class="layer-title">Ingress — Platform Namespace</div>
+    <div class="service-chips">
+        <div class="service-chip">☸️ K8s LoadBalancer</div>
+        <div class="service-chip" style="background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.25);">
+            🚪 API Gateway (YARP) — routes /customers, /orders, /rules, /reporting, /audit, /costs
+        </div>
+        <div class="service-chip">🔗 Correlation ID Middleware</div>
+    </div>
+</div>
+
+<div class="flow-arrow">▼</div>
+
+<div class="arch-layer">
+    <div class="layer-title">Microservices — Apps Namespace (Module F)</div>
+    <div class="service-chips">
+        <div class="service-chip">👤 Customer Service<br/><small style="color:var(--text-secondary);">CRUD, Redis cache, events</small></div>
+        <div class="service-chip">📋 Order Service<br/><small style="color:var(--text-secondary);">State machine, Polly retry</small></div>
+        <div class="service-chip">✅ Rules Service<br/><small style="color:var(--text-secondary);">Sync validation engine</small></div>
+        <div class="service-chip">📊 Reporting Service<br/><small style="color:var(--text-secondary);">Read-optimized views</small></div>
+        <div class="service-chip">📝 Audit Service<br/><small style="color:var(--text-secondary);">Immutable event log</small></div>
+        <div class="service-chip">💰 Cost Service<br/><small style="color:var(--text-secondary);">Azure pricing, Advisor</small></div>
+        <div class="service-chip" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.25);">🖥️ Dashboard (Blazor)<br/><small style="color:var(--text-secondary);">This app</small></div>
+    </div>
+</div>
+
+<div class="flow-arrow">▼ ▼</div>
+
+<div class="two-col">
+    <div class="arch-layer">
+        <div class="layer-title">Data Layer (Module D)</div>
+        <div class="service-chips" style="flex-direction:column;">
+            <div class="service-chip data">🐘 PostgreSQL Flexible Server (Burstable B1ms)
+                <br/><small style="color:var(--text-secondary);">4 databases: flowcore_customer, flowcore_caseorder, flowcore_reporting, flowcore_audit</small>
+            </div>
+            <div class="service-chip data">⚡ Azure Cache for Redis (Basic C1)
+                <br/><small style="color:var(--text-secondary);">Customer profiles, reporting summaries cache</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="arch-layer">
+        <div class="layer-title">Integration Layer (Module E)</div>
+        <div class="service-chips" style="flex-direction:column;">
+            <div class="service-chip msg">📨 Azure Service Bus (Standard)
+                <br/><small style="color:var(--text-secondary);">Topic: flowcore-events</small>
+            </div>
+            <div class="service-chip msg">📩 notification-worker subscription — NotificationRequested filter</div>
+            <div class="service-chip msg">📩 projection-worker subscription — all events</div>
+            <div class="service-chip msg">📩 audit-worker subscription — AuditRecorded filter</div>
+        </div>
+    </div>
+</div>
+
+<div class="flow-arrow">▼</div>
+
+<div class="arch-layer">
+    <div class="layer-title">Background Workers — Workers Namespace (Module G)</div>
+    <div class="service-chips">
+        <div class="service-chip msg">🔔 Notification Worker<br/><small style="color:var(--text-secondary);">BackgroundService, DLQ retry, scale-to-zero</small></div>
+    </div>
+</div>
+
+<div class="flow-arrow">▼</div>
+
+<div class="arch-layer">
+    <div class="layer-title">Observability (Module H) & Security (Module I)</div>
+    <div class="service-chips">
+        <div class="service-chip infra">📋 Log Analytics Workspace (30-day retention)</div>
+        <div class="service-chip infra">📊 Application Insights (all services)</div>
+        <div class="service-chip infra">🔐 Azure Key Vault (RBAC, soft delete)</div>
+    </div>
+</div>
+
+<h3 class="section-title" style="margin-top:2rem;">Infrastructure Foundation (Module A)</h3>
+<div class="arch-layer">
+    <div class="layer-title">Networking</div>
+    <div class="service-chips">
+        <div class="service-chip infra">🌐 VNet 10.100.0.0/16</div>
+        <div class="service-chip infra">snet-aks /22 (1022 IPs)</div>
+        <div class="service-chip infra">snet-services /24</div>
+        <div class="service-chip infra">snet-db /24 (PostgreSQL delegated)</div>
+        <div class="service-chip infra">🔗 Private DNS Zone</div>
+    </div>
+</div>
+
+<h3 class="section-title" style="margin-top:2rem;">Domain Event Flow</h3>
+<div class="card">
+    <pre style="color:var(--text-secondary);font-size:0.85rem;line-height:1.8;">
+  Customer Service ──── CustomerUpdated ───────┐
+                                               │
+  Order Service ─┬── OrderPlaced ──────────────┤
+                 ├── CaseCreated ──────────────┤──→ Service Bus Topic: flowcore-events
+                 ├── NotificationRequested ────┤        │
+                 └── (calls Rules Service) ────┘        ├─→ notification-worker sub → Notification Worker
+                                                        ├─→ projection-worker sub  → Reporting projection
+  All Services ──── AuditRecorded ─────────────────────→└─→ audit-worker sub       → Audit Service
+    </pre>
+</div>
+
+<h3 class="section-title" style="margin-top:2rem;">Key Design Principles</h3>
+<div class="card-grid">
+    <div class="card">
+        <div class="card-header"><span class="card-icon">1️⃣</span><span class="card-title">Single Responsibility</span></div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;">Each service owns exactly one business domain</p>
+    </div>
+    <div class="card">
+        <div class="card-header"><span class="card-icon">🗃️</span><span class="card-title">Data Ownership</span></div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;">Schema-per-service, no shared writes</p>
+    </div>
+    <div class="card">
+        <div class="card-header"><span class="card-icon">📄</span><span class="card-title">Contract-First</span></div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;">OpenAPI for sync, AsyncAPI for async</p>
+    </div>
+    <div class="card">
+        <div class="card-header"><span class="card-icon">📜</span><span class="card-title">Infrastructure-as-Code</span></div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;">All resources in Bicep modules</p>
+    </div>
+    <div class="card">
+        <div class="card-header"><span class="card-icon">👁️</span><span class="card-title">Observable by Default</span></div>
+        <p style="color:var(--text-secondary);font-size:0.85rem;">Health checks, structured logging, App Insights on every service</p>
+    </div>
+</div>

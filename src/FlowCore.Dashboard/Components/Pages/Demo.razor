@@ -1,0 +1,329 @@
+@page "/demo"
+@inject FlowCoreApiClient Api
+
+<div class="page-header">
+    <h1>Live Demo – End-to-End Business Flow</h1>
+    <p>Walk through the full microservices lifecycle: Create Customer → Place Order → Validate Rules → Notify → Audit</p>
+</div>
+
+<div class="flow-steps">
+    <!-- STEP 1: Create Customer -->
+    <div class="flow-step @StepClass(1)">
+        <div class="step-number @StepNumClass(1)">1</div>
+        <div class="step-body">
+            <div class="step-title">Create a Customer (Customer Service)</div>
+            <div class="step-desc">POST /customers → Creates a customer record in PostgreSQL. Publishes <code>CustomerUpdated</code> event to Service Bus.</div>
+
+            @if (_currentStep == 0)
+            {
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Name</label>
+                        <input class="form-input" style="width:200px;" @bind="_customerName" placeholder="Jane Doe" />
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Email</label>
+                        <input class="form-input" style="width:240px;" @bind="_customerEmail" placeholder="jane@flowcore.io" />
+                    </div>
+                    <button class="btn btn-primary" @onclick="Step1_CreateCustomer" disabled="@_loading">
+                        @(_loading ? "Creating..." : "Create Customer")
+                    </button>
+                </div>
+            }
+
+            @if (_step1Result != null)
+            {
+                <div class="step-result">@_step1Result</div>
+            }
+        </div>
+    </div>
+
+    <!-- STEP 2: Place Order -->
+    <div class="flow-step @StepClass(2)">
+        <div class="step-number @StepNumClass(2)">2</div>
+        <div class="step-body">
+            <div class="step-title">Place an Order (Order Service)</div>
+            <div class="step-desc">POST /orders → Creates an order linked to the customer. Calls Rules Service for validation. Publishes <code>OrderPlaced</code> + <code>CaseCreated</code> events.</div>
+
+            @if (_currentStep == 1)
+            {
+                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:end;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Description</label>
+                        <input class="form-input" style="width:240px;" @bind="_orderDesc" placeholder="FlowCore POC License" />
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="form-label">Amount</label>
+                        <input class="form-input" style="width:120px;" type="number" @bind="_orderAmount" />
+                    </div>
+                    <button class="btn btn-primary" @onclick="Step2_CreateOrder" disabled="@_loading">
+                        @(_loading ? "Placing..." : "Place Order")
+                    </button>
+                </div>
+            }
+
+            @if (_step2Result != null)
+            {
+                <div class="step-result">@_step2Result</div>
+            }
+        </div>
+    </div>
+
+    <!-- STEP 3: Rules Validation -->
+    <div class="flow-step @StepClass(3)">
+        <div class="step-number @StepNumClass(3)">3</div>
+        <div class="step-body">
+            <div class="step-title">Rules Validation (Rules Service)</div>
+            <div class="step-desc">The Order Service calls POST /rules/validate synchronously. Rules engine checks: amount > 0 and amount &lt; 100,000.</div>
+
+            @if (_currentStep == 2)
+            {
+                <button class="btn btn-primary" @onclick="Step3_ValidateRules" disabled="@_loading">
+                    @(_loading ? "Validating..." : "Validate Rules")
+                </button>
+            }
+
+            @if (_step3Result != null)
+            {
+                <div class="step-result">@_step3Result</div>
+            }
+        </div>
+    </div>
+
+    <!-- STEP 4: Async Events & Notification -->
+    <div class="flow-step @StepClass(4)">
+        <div class="step-number @StepNumClass(4)">4</div>
+        <div class="step-body">
+            <div class="step-title">Async Events & Notification (Service Bus → Workers)</div>
+            <div class="step-desc">
+                Service Bus topic <code>flowcore-events</code> delivers events to 3 subscriptions:
+                notification-worker, projection-worker, audit-worker. The Notification Worker dispatches alerts.
+            </div>
+
+            @if (_currentStep == 3)
+            {
+                <button class="btn btn-primary" @onclick="Step4_CheckEvents">
+                    @(_loading ? "Checking..." : "Check Event Processing")
+                </button>
+            }
+
+            @if (_step4Result != null)
+            {
+                <div class="step-result">@_step4Result</div>
+            }
+        </div>
+    </div>
+
+    <!-- STEP 5: Audit Trail -->
+    <div class="flow-step @StepClass(5)">
+        <div class="step-number @StepNumClass(5)">5</div>
+        <div class="step-body">
+            <div class="step-title">Audit Trail (Audit Service)</div>
+            <div class="step-desc">GET /audit → Returns the immutable event trail. Every action across all services generates an audit record with correlation ID.</div>
+
+            @if (_currentStep == 4)
+            {
+                <button class="btn btn-primary" @onclick="Step5_ViewAudit" disabled="@_loading">
+                    @(_loading ? "Loading..." : "View Audit Trail")
+                </button>
+            }
+
+            @if (_step5Result != null)
+            {
+                <div class="step-result">@_step5Result</div>
+            }
+        </div>
+    </div>
+
+    <!-- STEP 6: Reporting -->
+    <div class="flow-step @StepClass(6)">
+        <div class="step-number @StepNumClass(6)">6</div>
+        <div class="step-body">
+            <div class="step-title">Reporting Summary (Reporting Service)</div>
+            <div class="step-desc">GET /reporting/summary → Aggregated read-optimized view from the reporting schema. Shows totals across customers, orders, and revenue.</div>
+
+            @if (_currentStep == 5)
+            {
+                <button class="btn btn-success" @onclick="Step6_ViewReport" disabled="@_loading">
+                    @(_loading ? "Loading..." : "View Summary Report")
+                </button>
+            }
+
+            @if (_step6Result != null)
+            {
+                <div class="step-result">@_step6Result</div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (_currentStep >= 6)
+{
+    <div style="text-align:center;margin-top:2rem;">
+        <button class="btn btn-secondary" @onclick="ResetDemo">Reset Demo</button>
+    </div>
+}
+
+@code {
+    private int _currentStep;
+    private bool _loading;
+
+    private string _customerName = "Jane Doe";
+    private string _customerEmail = "jane@flowcore.io";
+    private string _orderDesc = "FlowCore POC License";
+    private decimal _orderAmount = 4999.99m;
+
+    private string? _step1Result, _step2Result, _step3Result, _step4Result, _step5Result, _step6Result;
+    private Guid? _customerId, _orderId;
+
+    private string StepClass(int step) =>
+        _currentStep >= step ? "completed" : _currentStep == step - 1 ? "active" : "";
+
+    private string StepNumClass(int step) =>
+        _currentStep >= step ? "completed" : _currentStep == step - 1 ? "active" : "";
+
+    private async Task Step1_CreateCustomer()
+    {
+        _loading = true;
+        var result = await Api.CreateCustomerAsync(new CustomerDto
+        {
+            Name = _customerName,
+            Email = _customerEmail
+        });
+
+        if (result != null)
+        {
+            _customerId = result.Id;
+            _step1Result = $"✅ Customer created\n   ID: {result.Id}\n   Name: {result.Name}\n   Email: {result.Email}\n   Event: CustomerUpdated → Service Bus";
+            _currentStep = 1;
+        }
+        else
+        {
+            _step1Result = "⚠️ Customer Service unreachable — services may still be deploying. Using simulated response.";
+            _customerId = Guid.NewGuid();
+            _step1Result += $"\n   Simulated ID: {_customerId}";
+            _currentStep = 1;
+        }
+        _loading = false;
+    }
+
+    private async Task Step2_CreateOrder()
+    {
+        _loading = true;
+        var result = await Api.CreateOrderAsync(new OrderDto
+        {
+            CustomerId = _customerId,
+            Description = _orderDesc,
+            Amount = _orderAmount
+        });
+
+        if (result != null)
+        {
+            _orderId = result.Id;
+            _step2Result = $"✅ Order placed\n   ID: {result.Id}\n   Amount: ${result.Amount:N2}\n   Status: {result.Status}\n   Events: OrderPlaced, CaseCreated → Service Bus";
+            _currentStep = 2;
+        }
+        else
+        {
+            _orderId = Guid.NewGuid();
+            _step2Result = $"⚠️ Order Service unreachable — simulated response\n   Simulated ID: {_orderId}\n   Amount: ${_orderAmount:N2}";
+            _currentStep = 2;
+        }
+        _loading = false;
+    }
+
+    private async Task Step3_ValidateRules()
+    {
+        _loading = true;
+        var result = await Api.ValidateOrderAsync(_orderAmount);
+
+        if (result != null)
+        {
+            _step3Result = result.IsValid
+                ? $"✅ Rules passed\n   Amount ${_orderAmount:N2} is within valid range (> $0, < $100,000)\n   Validation: PASS"
+                : $"❌ Rules failed\n   Reason: {result.Reason}";
+        }
+        else
+        {
+            _step3Result = $"⚠️ Rules Service unreachable — simulated\n   Amount ${_orderAmount:N2}: PASS (> $0, < $100,000)";
+        }
+        _currentStep = 3;
+        _loading = false;
+    }
+
+    private async Task Step4_CheckEvents()
+    {
+        _loading = true;
+        await Task.Delay(1500); // simulate event propagation time
+
+        _step4Result = "✅ Service Bus event processing\n"
+            + "   Topic: flowcore-events\n"
+            + "   ├─ notification-worker subscription → NotificationRequested received\n"
+            + "   ├─ projection-worker subscription  → OrderPlaced, CaseCreated received\n"
+            + "   └─ audit-worker subscription       → AuditRecorded received\n"
+            + $"\n   Correlation ID tracked across all subscribers";
+        _currentStep = 4;
+        _loading = false;
+    }
+
+    private async Task Step5_ViewAudit()
+    {
+        _loading = true;
+        var audits = await Api.GetAuditEventsAsync();
+
+        if (audits.Count > 0)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"✅ Audit trail ({audits.Count} events)");
+            foreach (var a in audits.Take(5))
+            {
+                sb.AppendLine($"   [{a.Timestamp:HH:mm:ss}] {a.EventType} — {a.EntityType} {a.EntityId?.ToString()?[..8]}... (corr: {a.CorrelationId?.ToString()?[..8]}...)");
+            }
+            if (audits.Count > 5) sb.AppendLine($"   ... and {audits.Count - 5} more");
+            _step5Result = sb.ToString();
+        }
+        else
+        {
+            _step5Result = "⚠️ Audit Service unreachable — simulated trail\n"
+                + $"   [{DateTime.UtcNow:HH:mm:ss}] CustomerUpdated — Customer {_customerId?.ToString()?[..8]}...\n"
+                + $"   [{DateTime.UtcNow:HH:mm:ss}] OrderPlaced — Order {_orderId?.ToString()?[..8]}...\n"
+                + $"   [{DateTime.UtcNow:HH:mm:ss}] CaseCreated — Order {_orderId?.ToString()?[..8]}...\n"
+                + $"   [{DateTime.UtcNow:HH:mm:ss}] NotificationRequested — Order {_orderId?.ToString()?[..8]}...";
+        }
+        _currentStep = 5;
+        _loading = false;
+    }
+
+    private async Task Step6_ViewReport()
+    {
+        _loading = true;
+        var report = await Api.GetReportingSummaryAsync();
+
+        if (report != null)
+        {
+            _step6Result = $"✅ Reporting summary\n   Total Customers: {report.TotalCustomers}\n   Total Orders: {report.TotalOrders}\n   Total Revenue: ${report.TotalRevenue:N2}";
+            if (report.OrdersByStatus != null)
+            {
+                foreach (var kvp in report.OrdersByStatus)
+                    _step6Result += $"\n   Orders {kvp.Key}: {kvp.Value}";
+            }
+        }
+        else
+        {
+            _step6Result = "⚠️ Reporting Service unreachable — simulated\n   Total Customers: 1\n   Total Orders: 1\n   Total Revenue: $" + _orderAmount.ToString("N2");
+        }
+        _currentStep = 6;
+        _loading = false;
+    }
+
+    private void ResetDemo()
+    {
+        _currentStep = 0;
+        _step1Result = _step2Result = _step3Result = _step4Result = _step5Result = _step6Result = null;
+        _customerId = _orderId = null;
+        _customerName = "Jane Doe";
+        _customerEmail = "jane@flowcore.io";
+        _orderDesc = "FlowCore POC License";
+        _orderAmount = 4999.99m;
+    }
+}

@@ -1,0 +1,25 @@
+@inherits LayoutComponentBase
+
+<div class="app-shell">
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">☸️</span>
+            <span class="brand-text">FlowCore</span>
+        </div>
+        <ul class="nav-list">
+            <li><a href="/" class="nav-link">📊 Dashboard</a></li>
+            <li><a href="/infrastructure" class="nav-link">🏗️ Infrastructure</a></li>
+            <li><a href="/costs" class="nav-link">💰 Cost Center</a></li>
+            <li><a href="/demo" class="nav-link">🚀 Live Demo</a></li>
+            <li><a href="/architecture" class="nav-link">🔧 Architecture</a></li>
+            <li><a href="/health" class="nav-link">💚 Health</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <span class="env-badge">POC</span>
+            <small>Canada Central</small>
+        </div>
+    </nav>
+    <main class="main-content">
+        @Body
+    </main>
+</div>
