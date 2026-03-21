@@ -1,12 +1,17 @@
 using Azure.Messaging.ServiceBus;
 using FlowCore.CustomerService.Data;
 using FlowCore.Shared.Events;
+using FlowCore.Shared.Middleware;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddControllers();
-builder.Services.AddHealthChecks();
+
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("CustomerDb")!, name: "postgresql")
+    .AddRedis(builder.Configuration.GetConnectionString("Redis")!, name: "redis");
 
 builder.Services.AddDbContext<CustomerDbContext>(opts =>
     opts.UseNpgsql(builder.Configuration.GetConnectionString("CustomerDb")));
@@ -26,6 +31,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.MapHealthChecks("/healthz");
 app.MapControllers();
 app.Run();

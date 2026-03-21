@@ -1,0 +1,168 @@
+# ──────────────────────────────────────────────────
+# Network Policies – Architectural Standardization
+# Business Outcome Dimension 6
+# Default-deny with explicit allow rules
+# ──────────────────────────────────────────────────
+
+# ── Default deny all ingress in apps namespace ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: apps
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# ── Default deny all ingress in workers namespace ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: workers
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+---
+# ── Allow API Gateway → Customer Service ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-customer
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      app: customer-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              purpose: platform-services
+          podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# ── Allow API Gateway → Order Service ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-order
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      app: order-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              purpose: platform-services
+          podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# ── Allow API Gateway → Rules Service ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-rules
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      app: rules-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              purpose: platform-services
+          podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# ── Allow API Gateway → Reporting Service ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-reporting
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      app: reporting-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              purpose: platform-services
+          podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# ── Allow API Gateway → Audit Service ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-gateway-to-audit
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      app: audit-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              purpose: platform-services
+          podSelector:
+            matchLabels:
+              app: api-gateway
+      ports:
+        - protocol: TCP
+          port: 8080
+---
+# ── Allow Order Service → Rules Service (inter-service sync call) ──
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-order-to-rules
+  namespace: apps
+spec:
+  podSelector:
+    matchLabels:
+      app: rules-service
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: order-service
+      ports:
+        - protocol: TCP
+          port: 8080

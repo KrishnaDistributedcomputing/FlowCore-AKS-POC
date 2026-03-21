@@ -1,10 +1,13 @@
+using FlowCore.Shared.Middleware;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddApplicationInsightsTelemetry();
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.MapHealthChecks("/healthz");
 
 app.MapPost("/rules/validate", ([FromBody] ValidateRequest req) =>

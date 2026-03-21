@@ -1,10 +1,14 @@
 using FlowCore.AuditService.Data;
+using FlowCore.Shared.Middleware;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHealthChecks();
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("AuditDb")!, name: "postgresql");
+
 builder.Services.AddDbContext<AuditDbContext>(opts =>
     opts.UseNpgsql(builder.Configuration.GetConnectionString("AuditDb")));
 
@@ -16,6 +20,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.MapHealthChecks("/healthz");
 
 app.MapPost("/audit/events", async ([FromBody] AuditEventRequest req, AuditDbContext db, CancellationToken ct) =>

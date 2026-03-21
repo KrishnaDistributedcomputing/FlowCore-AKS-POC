@@ -1,9 +1,13 @@
 using FlowCore.ReportingService.Data;
+using FlowCore.Shared.Middleware;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddHealthChecks();
+builder.Services.AddApplicationInsightsTelemetry();
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("ReportingDb")!, name: "postgresql")
+    .AddRedis(builder.Configuration.GetConnectionString("Redis")!, name: "redis");
 
 builder.Services.AddDbContext<ReportingDbContext>(opts =>
     opts.UseNpgsql(builder.Configuration.GetConnectionString("ReportingDb")));
@@ -19,6 +23,7 @@ using (var scope = app.Services.CreateScope())
     await db.Database.MigrateAsync();
 }
 
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.MapHealthChecks("/healthz");
 
 app.MapGet("/reporting/summary", async (ReportingDbContext db) =>

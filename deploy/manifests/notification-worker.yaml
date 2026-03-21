@@ -26,6 +26,11 @@ spec:
                 secretKeyRef:
                   name: flowcore-secrets
                   key: servicebus-connection
+            - name: APPLICATIONINSIGHTS__CONNECTIONSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: appinsights-connection-string
           resources:
             requests:
               cpu: 100m

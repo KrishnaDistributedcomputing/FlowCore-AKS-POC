@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths: ['src/**']
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +19,42 @@ env:
   AKS_NAME: aks-flowcore-poc
 
 jobs:
+  validate-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Spectral CLI
+        run: npm install -g @stoplight/spectral-cli
+
+      - name: Validate OpenAPI Contract
+        run: spectral lint specs/module-f-core-services/openapi.yaml --ruleset spectral:oas
+
+      - name: Install AsyncAPI CLI
+        run: npm install -g @asyncapi/cli
+
+      - name: Validate AsyncAPI Contract
+        run: asyncapi validate specs/module-e-messaging/asyncapi.yaml
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore FlowCore.sln
+
+      - name: Build
+        run: dotnet build FlowCore.sln --no-restore --configuration Release
+
   build:
+    needs: [validate-contracts, test]
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     strategy:
       matrix:

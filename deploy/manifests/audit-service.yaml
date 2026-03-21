@@ -28,6 +28,11 @@ spec:
                 secretKeyRef:
                   name: flowcore-secrets
                   key: audit-db-connection
+            - name: APPLICATIONINSIGHTS__CONNECTIONSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: appinsights-connection-string
           readinessProbe:
             httpGet:
               path: /healthz

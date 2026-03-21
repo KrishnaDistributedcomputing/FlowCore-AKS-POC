@@ -1,0 +1,47 @@
+# ──────────────────────────────────────────────────
+# Pod Disruption Budgets – Resiliency (Module K)
+# Business Outcome Dimension 2 + Module K
+# ──────────────────────────────────────────────────
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-gateway-pdb
+  namespace: platform
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: customer-service-pdb
+  namespace: apps
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: customer-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: order-service-pdb
+  namespace: apps
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: order-service
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: notification-worker-pdb
+  namespace: workers
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: notification-worker
