@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cost-service
+  namespace: apps
+  labels:
+    app: cost-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cost-service
+  template:
+    metadata:
+      labels:
+        app: cost-service
+    spec:
+      nodeSelector:
+        workload: apps
+      containers:
+        - name: cost-service
+          image: ${ACR_LOGIN_SERVER}/flowcore/cost-service:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ConnectionStrings__Redis
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: redis-connection
+            - name: APPLICATIONINSIGHTS__CONNECTIONSTRING
+              valueFrom:
+                secretKeyRef:
+                  name: flowcore-secrets
+                  key: appinsights-connection-string
+            - name: Azure__SubscriptionId
+              value: "e62428e7-08dd-4bc2-82e2-2c51586d9105"
+            - name: Azure__ResourceGroup
+              value: "rg-flowcore-poc"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cost-service
+  namespace: apps
+spec:
+  selector:
+    app: cost-service
+  ports:
+    - port: 80
+      targetPort: 8080
