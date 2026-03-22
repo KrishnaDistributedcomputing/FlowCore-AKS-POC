@@ -3,37 +3,43 @@
 @{ ViewData["Title"] = "Appointments"; }
 
 <div class="card">
-    <div class="card-header">
-        <h2>All Appointments</h2>
-        <div style="display:flex; gap:8px;">
-            <form method="get" style="display:flex; gap:8px;">
-                <select name="status" class="form-control" style="width:150px;" onchange="this.form.submit()">
-                    <option value="">All Statuses</option>
-                    <option value="Scheduled" selected="@(Model.StatusFilter == "Scheduled")">Scheduled</option>
-                    <option value="Checked-In" selected="@(Model.StatusFilter == "Checked-In")">Checked-In</option>
-                    <option value="Completed" selected="@(Model.StatusFilter == "Completed")">Completed</option>
-                    <option value="Cancelled" selected="@(Model.StatusFilter == "Cancelled")">Cancelled</option>
-                </select>
-            </form>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-calendar-check me-2 text-info"></i>All Appointments</h5>
+        <form method="get">
+            <select name="status" class="form-select form-select-sm" style="width:160px;" onchange="this.form.submit()">
+                <option value="" @(Model.StatusFilter == null ? "selected" : "")>All Statuses</option>
+                <option value="Scheduled" @(Model.StatusFilter == "Scheduled" ? "selected" : "")>Scheduled</option>
+                <option value="Checked-In" @(Model.StatusFilter == "Checked-In" ? "selected" : "")>Checked-In</option>
+                <option value="Completed" @(Model.StatusFilter == "Completed" ? "selected" : "")>Completed</option>
+                <option value="Cancelled" @(Model.StatusFilter == "Cancelled" ? "selected" : "")>Cancelled</option>
+            </select>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th class="ps-3">Date & Time</th><th>Patient</th><th>Type</th><th>Provider</th><th>Department</th><th>Reason</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var a in Model.Appointments)
+                    {
+                        <tr>
+                            <td class="ps-3">@a.ScheduledDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                            <td><a href="/Patients/Detail?id=@a.PatientId" class="text-decoration-none fw-medium">@a.Patient.FullName</a></td>
+                            <td><span class="badge bg-info bg-opacity-10 text-info-emphasis">@a.AppointmentType</span></td>
+                            <td>@a.Provider</td>
+                            <td>@a.Department</td>
+                            <td class="text-truncate" style="max-width:200px;">@(a.Reason ?? "—")</td>
+                            <td>
+                                @{var acls = a.Status switch { "Scheduled" => "info", "Completed" => "success", "Cancelled" or "No Show" => "danger", _ => "warning" };}
+                                <span class="badge bg-@acls bg-opacity-25 text-@(acls)-emphasis">@a.Status</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
     </div>
-    <div class="card-body">
-        <table class="data-table">
-            <thead><tr><th>Date & Time</th><th>Patient</th><th>Type</th><th>Provider</th><th>Department</th><th>Reason</th><th>Status</th></tr></thead>
-            <tbody>
-                @foreach (var a in Model.Appointments)
-                {
-                    <tr>
-                        <td>@a.ScheduledDate.ToString("MMM dd, yyyy h:mm tt")</td>
-                        <td><a href="/Patients/Detail?id=@a.PatientId">@a.Patient.FullName</a></td>
-                        <td>@a.AppointmentType</td>
-                        <td>@a.Provider</td>
-                        <td>@a.Department</td>
-                        <td>@(a.Reason ?? "—")</td>
-                        <td><span class="badge @(a.Status == "Scheduled" ? "badge-info" : a.Status == "Completed" ? "badge-success" : a.Status == "Cancelled" || a.Status == "No Show" ? "badge-danger" : "badge-warning")">@a.Status</span></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="card-footer text-secondary small">
+        <i class="bi bi-info-circle me-1"></i>Showing @Model.Appointments.Count appointment(s)
     </div>
 </div>

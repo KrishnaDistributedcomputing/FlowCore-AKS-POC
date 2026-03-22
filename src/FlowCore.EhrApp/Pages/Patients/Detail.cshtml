@@ -4,193 +4,250 @@
 
 @if (Model.Patient == null)
 {
-    <div class="empty-state"><div class="empty-icon">❌</div><p>Patient not found</p></div>
+    <div class="text-center py-5 text-secondary"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2"></i><p>Patient not found</p></div>
     return;
 }
 
-<div class="patient-banner">
-    <div class="patient-avatar">@Model.Patient.FirstName[0]@Model.Patient.LastName[0]</div>
-    <div class="patient-info">
-        <h2>@Model.Patient.FullName</h2>
-        <div class="patient-meta">
-            <span>MRN: @Model.Patient.MRN</span>
-            <span>@Model.Patient.Age yrs, @Model.Patient.Gender</span>
-            <span>DOB: @Model.Patient.DateOfBirth.ToString("MMM dd, yyyy")</span>
-            <span>Blood: @(Model.Patient.BloodType ?? "Unknown")</span>
+<!-- Patient Banner -->
+<div class="card mb-4" style="background: linear-gradient(135deg, #1a365d 0%, #0f172a 60%, #1e293b 100%);">
+    <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="avatar-circle bg-primary bg-opacity-25 text-primary">@Model.Patient.FirstName[0]@Model.Patient.LastName[0]</div>
+            <div class="flex-grow-1">
+                <h3 class="fw-bold mb-1">@Model.Patient.FullName</h3>
+                <div class="d-flex gap-3 text-secondary small flex-wrap">
+                    <span><i class="bi bi-upc-scan me-1"></i>@Model.Patient.MRN</span>
+                    <span><i class="bi bi-calendar3 me-1"></i>@Model.Patient.Age yrs, @Model.Patient.Gender</span>
+                    <span><i class="bi bi-cake2 me-1"></i>DOB: @Model.Patient.DateOfBirth.ToString("MMM dd, yyyy")</span>
+                    @if (Model.Patient.BloodType != null)
+                    {
+                        <span class="badge bg-danger bg-opacity-25 text-danger-emphasis"><i class="bi bi-droplet-fill me-1"></i>@Model.Patient.BloodType</span>
+                    }
+                </div>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/Patients/Edit?id=@Model.Patient.Id" class="btn btn-outline-light btn-sm"><i class="bi bi-pencil me-1"></i>Edit</a>
+                <a href="/Patients" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Back</a>
+            </div>
         </div>
-    </div>
-    <div style="margin-left:auto; display:flex; gap:8px;">
-        <a href="/Patients/Edit?id=@Model.Patient.Id" class="btn btn-outline">Edit</a>
-        <a href="/Patients" class="btn btn-outline">Back</a>
     </div>
 </div>
 
+<!-- Allergy Alert -->
 @if (!string.IsNullOrEmpty(Model.Patient.Allergies))
 {
-    <div style="background:rgba(239,68,68,.1); border:1px solid rgba(239,68,68,.3); border-radius:8px; padding:12px 16px; margin-bottom:20px; display:flex; align-items:center; gap:8px;">
-        <span style="font-size:1.2rem;">⚠️</span>
-        <span><strong>Allergies:</strong> @Model.Patient.Allergies</span>
+    <div class="alert alert-danger d-flex align-items-center mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+        <div><strong>Allergies:</strong> @Model.Patient.Allergies</div>
     </div>
 }
 
-<div class="detail-grid">
-    <div class="detail-item"><div class="detail-label">Email</div><div class="detail-value">@(Model.Patient.Email ?? "—")</div></div>
-    <div class="detail-item"><div class="detail-label">Phone</div><div class="detail-value">@(Model.Patient.Phone ?? "—")</div></div>
-    <div class="detail-item"><div class="detail-label">Address</div><div class="detail-value">@(Model.Patient.Address ?? "—"), @(Model.Patient.City ?? "") @(Model.Patient.PostalCode ?? "")</div></div>
-    <div class="detail-item"><div class="detail-label">Insurance</div><div class="detail-value">@(Model.Patient.InsuranceProvider ?? "—") @(Model.Patient.InsurancePolicyNumber != null ? $"({Model.Patient.InsurancePolicyNumber})" : "")</div></div>
-</div>
-
-<div class="tabs">
-    <a href="#encounters" class="tab-link active" onclick="showTab('encounters', this)">Encounters (@Model.Patient.Encounters.Count)</a>
-    <a href="#medications" class="tab-link" onclick="showTab('medications', this)">Medications (@Model.Patient.Medications.Count)</a>
-    <a href="#labs" class="tab-link" onclick="showTab('labs', this)">Lab Results (@Model.Patient.LabResults.Count)</a>
-    <a href="#appointments" class="tab-link" onclick="showTab('appointments', this)">Appointments (@Model.Patient.Appointments.Count)</a>
-    <a href="#vitals" class="tab-link" onclick="showTab('vitals', this)">Vitals (@Model.Patient.VitalSigns.Count)</a>
-</div>
-
-<div id="tab-encounters" class="tab-panel">
-    <div class="card">
-        <div class="card-body">
-            @if (Model.Patient.Encounters.Any())
-            {
-                <table class="data-table">
-                    <thead><tr><th>Date</th><th>Type</th><th>Provider</th><th>Chief Complaint</th><th>Diagnosis</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @foreach (var e in Model.Patient.Encounters.OrderByDescending(e => e.EncounterDate))
-                        {
-                            <tr>
-                                <td>@e.EncounterDate.ToString("MMM dd, yyyy")</td>
-                                <td><span class="badge badge-info">@e.EncounterType</span></td>
-                                <td>@e.Provider</td>
-                                <td>@e.ChiefComplaint</td>
-                                <td>@(e.Diagnosis ?? "—")</td>
-                                <td><span class="badge @(e.Status == "Active" ? "badge-warning" : "badge-success")">@e.Status</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else { <div class="empty-state"><p>No encounters recorded</p></div> }
+<!-- Details Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-secondary small text-uppercase mb-1"><i class="bi bi-envelope me-1"></i>Email</div>
+                <div>@(Model.Patient.Email ?? "—")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-secondary small text-uppercase mb-1"><i class="bi bi-telephone me-1"></i>Phone</div>
+                <div>@(Model.Patient.Phone ?? "—")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-secondary small text-uppercase mb-1"><i class="bi bi-geo-alt me-1"></i>Address</div>
+                <div>@(Model.Patient.Address ?? "—"), @(Model.Patient.City ?? "") @(Model.Patient.PostalCode ?? "")</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-secondary small text-uppercase mb-1"><i class="bi bi-shield-check me-1"></i>Insurance</div>
+                <div>@(Model.Patient.InsuranceProvider ?? "—") @(Model.Patient.InsurancePolicyNumber != null ? $"({Model.Patient.InsurancePolicyNumber})" : "")</div>
+            </div>
         </div>
     </div>
 </div>
 
-<div id="tab-medications" class="tab-panel" style="display:none;">
-    <div class="card">
-        <div class="card-body">
-            @if (Model.Patient.Medications.Any())
-            {
-                <table class="data-table">
-                    <thead><tr><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Route</th><th>Prescribed By</th><th>Start</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @foreach (var m in Model.Patient.Medications.OrderByDescending(m => m.StartDate))
-                        {
-                            <tr>
-                                <td><strong>@m.Name</strong></td>
-                                <td>@m.Dosage</td>
-                                <td>@m.Frequency</td>
-                                <td>@(m.Route ?? "—")</td>
-                                <td>@(m.PrescribedBy ?? "—")</td>
-                                <td>@m.StartDate.ToString("MMM dd, yyyy")</td>
-                                <td><span class="badge @(m.Status == "Active" ? "badge-success" : m.Status == "Discontinued" ? "badge-danger" : "badge-neutral")">@m.Status</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else { <div class="empty-state"><p>No medications recorded</p></div> }
+<!-- Bootstrap Tabs -->
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-encounters" type="button"><i class="bi bi-clipboard2-pulse me-1"></i>Encounters <span class="badge bg-secondary ms-1">@Model.Patient.Encounters.Count</span></button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-medications" type="button"><i class="bi bi-capsule me-1"></i>Medications <span class="badge bg-secondary ms-1">@Model.Patient.Medications.Count</span></button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-labs" type="button"><i class="bi bi-droplet-half me-1"></i>Lab Results <span class="badge bg-secondary ms-1">@Model.Patient.LabResults.Count</span></button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-appointments" type="button"><i class="bi bi-calendar-check me-1"></i>Appointments <span class="badge bg-secondary ms-1">@Model.Patient.Appointments.Count</span></button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-vitals" type="button"><i class="bi bi-heart-pulse me-1"></i>Vitals <span class="badge bg-secondary ms-1">@Model.Patient.VitalSigns.Count</span></button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Encounters Tab -->
+    <div class="tab-pane fade show active" id="tab-encounters">
+        <div class="card">
+            <div class="card-body p-0">
+                @if (Model.Patient.Encounters.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr><th class="ps-3">Date</th><th>Type</th><th>Provider</th><th>Chief Complaint</th><th>Diagnosis</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var e in Model.Patient.Encounters.OrderByDescending(e => e.EncounterDate))
+                                {
+                                    <tr>
+                                        <td class="ps-3">@e.EncounterDate.ToString("MMM dd, yyyy")</td>
+                                        <td><span class="badge bg-info bg-opacity-25 text-info-emphasis">@e.EncounterType</span></td>
+                                        <td>@e.Provider</td>
+                                        <td>@e.ChiefComplaint</td>
+                                        <td>@(e.Diagnosis ?? "—")</td>
+                                        <td><span class="badge bg-@(e.Status == "Active" ? "warning" : "success") bg-opacity-25 text-@(e.Status == "Active" ? "warning" : "success")-emphasis">@e.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else { <div class="text-center py-4 text-secondary">No encounters recorded</div> }
+            </div>
+        </div>
+    </div>
+
+    <!-- Medications Tab -->
+    <div class="tab-pane fade" id="tab-medications">
+        <div class="card">
+            <div class="card-body p-0">
+                @if (Model.Patient.Medications.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr><th class="ps-3">Medication</th><th>Dosage</th><th>Frequency</th><th>Route</th><th>Prescribed By</th><th>Start</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var m in Model.Patient.Medications.OrderByDescending(m => m.StartDate))
+                                {
+                                    <tr>
+                                        <td class="ps-3 fw-semibold">@m.Name</td>
+                                        <td>@m.Dosage</td>
+                                        <td>@m.Frequency</td>
+                                        <td>@(m.Route ?? "—")</td>
+                                        <td>@(m.PrescribedBy ?? "—")</td>
+                                        <td>@m.StartDate.ToString("MMM dd, yyyy")</td>
+                                        <td><span class="badge bg-@(m.Status == "Active" ? "success" : m.Status == "Discontinued" ? "danger" : "secondary") bg-opacity-25 text-@(m.Status == "Active" ? "success" : m.Status == "Discontinued" ? "danger" : "secondary")-emphasis">@m.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else { <div class="text-center py-4 text-secondary">No medications recorded</div> }
+            </div>
+        </div>
+    </div>
+
+    <!-- Lab Results Tab -->
+    <div class="tab-pane fade" id="tab-labs">
+        <div class="card">
+            <div class="card-body p-0">
+                @if (Model.Patient.LabResults.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr><th class="ps-3">Date</th><th>Test</th><th>Category</th><th>Result</th><th>Reference</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var l in Model.Patient.LabResults.OrderByDescending(l => l.OrderDate))
+                                {
+                                    <tr>
+                                        <td class="ps-3">@l.OrderDate.ToString("MMM dd, yyyy")</td>
+                                        <td class="fw-semibold">@l.TestName</td>
+                                        <td>@l.Category</td>
+                                        <td>@(l.Result ?? "—") @(l.Unit ?? "")</td>
+                                        <td>@(l.ReferenceRange ?? "—")</td>
+                                        <td><span class="badge bg-@(l.Status == "Abnormal" ? "danger" : l.Status == "Pending" ? "warning" : "success") bg-opacity-25 text-@(l.Status == "Abnormal" ? "danger" : l.Status == "Pending" ? "warning" : "success")-emphasis">@l.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else { <div class="text-center py-4 text-secondary">No lab results recorded</div> }
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointments Tab -->
+    <div class="tab-pane fade" id="tab-appointments">
+        <div class="card">
+            <div class="card-body p-0">
+                @if (Model.Patient.Appointments.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr><th class="ps-3">Date & Time</th><th>Type</th><th>Provider</th><th>Department</th><th>Reason</th><th>Status</th></tr></thead>
+                            <tbody>
+                                @foreach (var a in Model.Patient.Appointments.OrderByDescending(a => a.ScheduledDate))
+                                {
+                                    <tr>
+                                        <td class="ps-3">@a.ScheduledDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                                        <td>@a.AppointmentType</td>
+                                        <td>@a.Provider</td>
+                                        <td>@a.Department</td>
+                                        <td>@(a.Reason ?? "—")</td>
+                                        <td><span class="badge bg-@(a.Status == "Scheduled" ? "info" : a.Status == "Completed" ? "success" : a.Status == "Cancelled" ? "danger" : "warning") bg-opacity-25 text-@(a.Status == "Scheduled" ? "info" : a.Status == "Completed" ? "success" : a.Status == "Cancelled" ? "danger" : "warning")-emphasis">@a.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else { <div class="text-center py-4 text-secondary">No appointments recorded</div> }
+            </div>
+        </div>
+    </div>
+
+    <!-- Vitals Tab -->
+    <div class="tab-pane fade" id="tab-vitals">
+        <div class="card">
+            <div class="card-body p-0">
+                @if (Model.Patient.VitalSigns.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead><tr><th class="ps-3">Date</th><th>Temp (°F)</th><th>HR (bpm)</th><th>BP</th><th>RR</th><th>SpO2 (%)</th><th>Weight (kg)</th><th>Recorded By</th></tr></thead>
+                            <tbody>
+                                @foreach (var v in Model.Patient.VitalSigns.OrderByDescending(v => v.RecordedAt))
+                                {
+                                    <tr>
+                                        <td class="ps-3">@v.RecordedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                                        <td>@(v.Temperature?.ToString("F1") ?? "—")</td>
+                                        <td>@(v.HeartRate?.ToString() ?? "—")</td>
+                                        <td>@(v.SystolicBP != null ? $"{v.SystolicBP}/{v.DiastolicBP}" : "—")</td>
+                                        <td>@(v.RespiratoryRate?.ToString() ?? "—")</td>
+                                        <td>@(v.OxygenSaturation?.ToString("F1") ?? "—")</td>
+                                        <td>@(v.Weight?.ToString("F1") ?? "—")</td>
+                                        <td>@(v.RecordedBy ?? "—")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else { <div class="text-center py-4 text-secondary">No vitals recorded</div> }
+            </div>
         </div>
     </div>
 </div>
-
-<div id="tab-labs" class="tab-panel" style="display:none;">
-    <div class="card">
-        <div class="card-body">
-            @if (Model.Patient.LabResults.Any())
-            {
-                <table class="data-table">
-                    <thead><tr><th>Date</th><th>Test</th><th>Category</th><th>Result</th><th>Reference</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @foreach (var l in Model.Patient.LabResults.OrderByDescending(l => l.OrderDate))
-                        {
-                            <tr>
-                                <td>@l.OrderDate.ToString("MMM dd, yyyy")</td>
-                                <td><strong>@l.TestName</strong></td>
-                                <td>@l.Category</td>
-                                <td>@(l.Result ?? "—") @(l.Unit ?? "")</td>
-                                <td>@(l.ReferenceRange ?? "—")</td>
-                                <td><span class="badge @(l.Status == "Abnormal" ? "badge-danger" : l.Status == "Pending" ? "badge-warning" : "badge-success")">@l.Status</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else { <div class="empty-state"><p>No lab results recorded</p></div> }
-        </div>
-    </div>
-</div>
-
-<div id="tab-appointments" class="tab-panel" style="display:none;">
-    <div class="card">
-        <div class="card-body">
-            @if (Model.Patient.Appointments.Any())
-            {
-                <table class="data-table">
-                    <thead><tr><th>Date & Time</th><th>Type</th><th>Provider</th><th>Department</th><th>Reason</th><th>Status</th></tr></thead>
-                    <tbody>
-                        @foreach (var a in Model.Patient.Appointments.OrderByDescending(a => a.ScheduledDate))
-                        {
-                            <tr>
-                                <td>@a.ScheduledDate.ToString("MMM dd, yyyy h:mm tt")</td>
-                                <td>@a.AppointmentType</td>
-                                <td>@a.Provider</td>
-                                <td>@a.Department</td>
-                                <td>@(a.Reason ?? "—")</td>
-                                <td><span class="badge @(a.Status == "Scheduled" ? "badge-info" : a.Status == "Completed" ? "badge-success" : a.Status == "Cancelled" ? "badge-danger" : "badge-warning")">@a.Status</span></td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else { <div class="empty-state"><p>No appointments recorded</p></div> }
-        </div>
-    </div>
-</div>
-
-<div id="tab-vitals" class="tab-panel" style="display:none;">
-    <div class="card">
-        <div class="card-body">
-            @if (Model.Patient.VitalSigns.Any())
-            {
-                <table class="data-table">
-                    <thead><tr><th>Date</th><th>Temp (°F)</th><th>HR (bpm)</th><th>BP</th><th>RR</th><th>SpO2 (%)</th><th>Weight (kg)</th><th>Recorded By</th></tr></thead>
-                    <tbody>
-                        @foreach (var v in Model.Patient.VitalSigns.OrderByDescending(v => v.RecordedAt))
-                        {
-                            <tr>
-                                <td>@v.RecordedAt.ToString("MMM dd, yyyy HH:mm")</td>
-                                <td>@(v.Temperature?.ToString("F1") ?? "—")</td>
-                                <td>@(v.HeartRate?.ToString() ?? "—")</td>
-                                <td>@(v.SystolicBP != null ? $"{v.SystolicBP}/{v.DiastolicBP}" : "—")</td>
-                                <td>@(v.RespiratoryRate?.ToString() ?? "—")</td>
-                                <td>@(v.OxygenSaturation?.ToString("F1") ?? "—")</td>
-                                <td>@(v.Weight?.ToString("F1") ?? "—")</td>
-                                <td>@(v.RecordedBy ?? "—")</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-            else { <div class="empty-state"><p>No vitals recorded</p></div> }
-        </div>
-    </div>
-</div>
-
-<script>
-function showTab(name, el) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.tab-link').forEach(l => l.classList.remove('active'));
-    document.getElementById('tab-' + name).style.display = 'block';
-    el.classList.add('active');
-}
-</script>

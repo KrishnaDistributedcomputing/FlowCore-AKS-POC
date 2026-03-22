@@ -4,26 +4,34 @@
 
 <div class="card">
     <div class="card-header">
-        <h2>All Encounters</h2>
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-clipboard2-pulse me-2 text-warning"></i>All Encounters</h5>
     </div>
-    <div class="card-body">
-        <table class="data-table">
-            <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Provider</th><th>Department</th><th>Chief Complaint</th><th>Diagnosis</th><th>Status</th></tr></thead>
-            <tbody>
-                @foreach (var e in Model.Encounters)
-                {
-                    <tr>
-                        <td>@e.EncounterDate.ToString("MMM dd, yyyy")</td>
-                        <td><a href="/Patients/Detail?id=@e.PatientId">@e.Patient.FullName</a></td>
-                        <td><span class="badge badge-info">@e.EncounterType</span></td>
-                        <td>@(e.Provider ?? "—")</td>
-                        <td>@(e.Department ?? "—")</td>
-                        <td>@(e.ChiefComplaint ?? "—")</td>
-                        <td>@(e.Diagnosis ?? "—")</td>
-                        <td><span class="badge @(e.Status == "Active" ? "badge-warning" : e.Status == "Completed" ? "badge-success" : "badge-danger")">@e.Status</span></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th class="ps-3">Date</th><th>Patient</th><th>Type</th><th>Provider</th><th>Department</th><th>Chief Complaint</th><th>Diagnosis</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var e in Model.Encounters)
+                    {
+                        <tr>
+                            <td class="ps-3">@e.EncounterDate.ToString("MMM dd, yyyy")</td>
+                            <td><a href="/Patients/Detail?id=@e.PatientId" class="text-decoration-none fw-medium">@e.Patient.FullName</a></td>
+                            <td>
+                                @{var eicon = e.EncounterType switch { "Emergency" => "bi-exclamation-triangle text-danger", "Telehealth" => "bi-camera-video text-info", "Inpatient" => "bi-building text-warning", _ => "bi-clipboard text-primary" };}
+                                <span class="badge bg-info bg-opacity-10 text-info-emphasis"><i class="bi @eicon me-1"></i>@e.EncounterType</span>
+                            </td>
+                            <td>@(e.Provider ?? "—")</td>
+                            <td>@(e.Department ?? "—")</td>
+                            <td class="text-truncate" style="max-width:200px;">@(e.ChiefComplaint ?? "—")</td>
+                            <td class="text-truncate" style="max-width:180px;">@(e.Diagnosis ?? "—")</td>
+                            <td><span class="badge bg-@(e.Status == "Active" ? "warning" : e.Status == "Completed" ? "success" : "danger") bg-opacity-25 text-@(e.Status == "Active" ? "warning" : e.Status == "Completed" ? "success" : "danger")-emphasis">@e.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer text-secondary small">
+        <i class="bi bi-info-circle me-1"></i>Showing @Model.Encounters.Count encounter(s)
     </div>
 </div>

@@ -2,49 +2,68 @@
 @model FlowCore.EhrApp.Pages.LabResultsModel
 @{ ViewData["Title"] = "Lab Results"; }
 
-<div class="stat-grid" style="margin-bottom:20px;">
-    <div class="stat-card">
-        <div class="stat-icon">🧪</div>
-        <div class="stat-value">@Model.TotalLabs</div>
-        <div class="stat-label">Total Lab Orders</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary"><i class="bi bi-clipboard2-pulse"></i></div>
+                <div><div class="fs-3 fw-bold">@Model.TotalLabs</div><div class="text-secondary small">Total Lab Orders</div></div>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-value" style="color:var(--warning);">@Model.PendingCount</div>
-        <div class="stat-label">Pending Results</div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning"><i class="bi bi-hourglass-split"></i></div>
+                <div><div class="fs-3 fw-bold">@Model.PendingCount</div><div class="text-secondary small">Pending Results</div></div>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon">⚠️</div>
-        <div class="stat-value" style="color:var(--danger);">@Model.AbnormalCount</div>
-        <div class="stat-label">Abnormal Results</div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-danger bg-opacity-10 text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <div><div class="fs-3 fw-bold">@Model.AbnormalCount</div><div class="text-secondary small">Abnormal Results</div></div>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon">✅</div>
-        <div class="stat-value" style="color:var(--success);">@Model.CompletedCount</div>
-        <div class="stat-label">Completed</div>
+    <div class="col-md-3">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon bg-success bg-opacity-10 text-success"><i class="bi bi-check-circle-fill"></i></div>
+                <div><div class="fs-3 fw-bold">@Model.CompletedCount</div><div class="text-secondary small">Completed</div></div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="card">
-    <div class="card-header"><h2>All Lab Results</h2></div>
-    <div class="card-body">
-        <table class="data-table">
-            <thead><tr><th>Order Date</th><th>Patient</th><th>Test</th><th>Category</th><th>Result</th><th>Reference Range</th><th>Ordered By</th><th>Status</th></tr></thead>
-            <tbody>
-                @foreach (var l in Model.Labs)
-                {
-                    <tr>
-                        <td>@l.OrderDate.ToString("MMM dd, yyyy")</td>
-                        <td><a href="/Patients/Detail?id=@l.PatientId">@l.Patient.FullName</a></td>
-                        <td><strong>@l.TestName</strong></td>
-                        <td>@l.Category</td>
-                        <td>@(l.Result ?? "—") @(l.Unit ?? "")</td>
-                        <td>@(l.ReferenceRange ?? "—")</td>
-                        <td>@(l.OrderedBy ?? "—")</td>
-                        <td><span class="badge @(l.Status == "Abnormal" ? "badge-danger" : l.Status == "Pending" ? "badge-warning" : "badge-success")">@l.Status</span></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <div class="card-header">
+        <h5 class="mb-0 fw-semibold"><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>All Lab Results</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th class="ps-3">Order Date</th><th>Patient</th><th>Test</th><th>Category</th><th>Result</th><th>Reference Range</th><th>Ordered By</th><th>Status</th></tr></thead>
+                <tbody>
+                    @foreach (var l in Model.Labs)
+                    {
+                        <tr>
+                            <td class="ps-3">@l.OrderDate.ToString("MMM dd, yyyy")</td>
+                            <td><a href="/Patients/Detail?id=@l.PatientId" class="text-decoration-none fw-medium">@l.Patient.FullName</a></td>
+                            <td class="fw-semibold">@l.TestName</td>
+                            <td><span class="badge bg-secondary bg-opacity-25">@l.Category</span></td>
+                            <td>@(l.Result ?? "—") @(l.Unit ?? "")</td>
+                            <td class="text-secondary">@(l.ReferenceRange ?? "—")</td>
+                            <td>@(l.OrderedBy ?? "—")</td>
+                            <td><span class="badge bg-@(l.Status == "Abnormal" ? "danger" : l.Status == "Pending" ? "warning" : "success") bg-opacity-25 text-@(l.Status == "Abnormal" ? "danger" : l.Status == "Pending" ? "warning" : "success")-emphasis">@l.Status</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer text-secondary small">
+        <i class="bi bi-info-circle me-1"></i>Showing @Model.Labs.Count lab result(s)
     </div>
 </div>

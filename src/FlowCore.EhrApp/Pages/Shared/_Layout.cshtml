@@ -1,42 +1,70 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - FlowCore EHR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YcnS/1p0p/6cPNnY0Dtp6yMDgK0gIhlGR8B" crossorigin="anonymous" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="~/css/site.css" />
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
 </head>
 <body>
-    <nav class="sidebar">
-        <div class="sidebar-brand">
-            <span class="brand-icon">🏥</span>
-            <span class="brand-text">FlowCore EHR</span>
-        </div>
-        <ul class="sidebar-nav">
-            <li><a href="/" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" || ViewContext.HttpContext.Request.Path == "/" ? "active" : "")"><span class="nav-icon">📊</span> Dashboard</a></li>
-            <li><a href="/Patients" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Patients") ? "active" : "")"><span class="nav-icon">👥</span> Patients</a></li>
-            <li><a href="/Appointments" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Appointments") ? "active" : "")"><span class="nav-icon">📅</span> Appointments</a></li>
-            <li><a href="/Encounters" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Encounters") ? "active" : "")"><span class="nav-icon">🩺</span> Encounters</a></li>
-            <li><a href="/Medications" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Medications") ? "active" : "")"><span class="nav-icon">💊</span> Medications</a></li>
-            <li><a href="/LabResults" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/LabResults") ? "active" : "")"><span class="nav-icon">🧪</span> Lab Results</a></li>
-        </ul>
-        <div class="sidebar-footer">
-            <div class="env-badge">AKS Container</div>
-            <div class="footer-text">PostgreSQL Backend</div>
-        </div>
-    </nav>
-    <main class="main-content">
-        <header class="top-bar">
-            <h1 class="page-title">@ViewData["Title"]</h1>
-            <div class="top-bar-actions">
-                <span class="db-badge" title="Connected to PostgreSQL on AKS">🐘 PostgreSQL</span>
-                <span class="k8s-badge" title="Running on Azure Kubernetes Service">☸ AKS</span>
+    @{
+        var path = ViewContext.HttpContext.Request.Path.ToString();
+        bool isHome = path == "/" || path == "";
+    }
+    <!-- Sidebar -->
+    <div class="d-flex">
+        <nav class="sidebar d-flex flex-column flex-shrink-0 p-3 text-white" style="width: 260px; min-height: 100vh; position: fixed; top: 0; left: 0; z-index: 1040;">
+            <a href="/" class="d-flex align-items-center mb-3 text-white text-decoration-none border-bottom pb-3">
+                <i class="bi bi-hospital fs-4 me-2 text-info"></i>
+                <span class="fs-5 fw-bold">FlowCore EHR</span>
+            </a>
+            <ul class="nav nav-pills flex-column mb-auto">
+                <li class="nav-item">
+                    <a href="/" class="nav-link text-white @(isHome ? "active" : "")"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a>
+                </li>
+                <li>
+                    <a href="/Patients" class="nav-link text-white @(path.StartsWith("/Patients") ? "active" : "")"><i class="bi bi-people-fill me-2"></i>Patients</a>
+                </li>
+                <li>
+                    <a href="/Appointments" class="nav-link text-white @(path.StartsWith("/Appointments") ? "active" : "")"><i class="bi bi-calendar-check me-2"></i>Appointments</a>
+                </li>
+                <li>
+                    <a href="/Encounters" class="nav-link text-white @(path.StartsWith("/Encounters") ? "active" : "")"><i class="bi bi-clipboard2-pulse me-2"></i>Encounters</a>
+                </li>
+                <li>
+                    <a href="/Medications" class="nav-link text-white @(path.StartsWith("/Medications") ? "active" : "")"><i class="bi bi-capsule me-2"></i>Medications</a>
+                </li>
+                <li>
+                    <a href="/LabResults" class="nav-link text-white @(path.StartsWith("/LabResults") ? "active" : "")"><i class="bi bi-droplet-half me-2"></i>Lab Results</a>
+                </li>
+            </ul>
+            <hr />
+            <div class="text-center small">
+                <span class="badge bg-success bg-opacity-25 text-success mb-1"><i class="bi bi-hdd-rack me-1"></i>AKS Container</span><br />
+                <span class="text-secondary"><i class="bi bi-database me-1"></i>PostgreSQL</span>
             </div>
-        </header>
-        <div class="content-area">
-            @RenderBody()
-        </div>
-    </main>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-grow-1" style="margin-left: 260px;">
+            <!-- Top Navbar -->
+            <nav class="navbar navbar-expand sticky-top border-bottom px-4 py-2" style="background: var(--bs-body-bg);">
+                <h1 class="navbar-brand mb-0 fs-5 fw-bold text-white">@ViewData["Title"]</h1>
+                <div class="ms-auto d-flex gap-2">
+                    <span class="badge bg-primary bg-opacity-25 text-primary-emphasis d-flex align-items-center"><i class="bi bi-database-fill me-1"></i>PostgreSQL</span>
+                    <span class="badge bg-info bg-opacity-25 text-info-emphasis d-flex align-items-center"><i class="bi bi-cloud me-1"></i>AKS</span>
+                </div>
+            </nav>
+            <div class="p-4">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
