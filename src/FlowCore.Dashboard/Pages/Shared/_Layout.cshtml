@@ -10,20 +10,29 @@
 <div class="app-shell">
     <nav class="sidebar">
         <div class="sidebar-brand">
-            <span class="brand-icon">&#9096;</span>
+            <span class="brand-icon">&#9878;</span>
             <span class="brand-text">FlowCore</span>
         </div>
         <ul class="nav-list">
-            <li><a href="/" class="nav-link">Dashboard</a></li>
-            <li><a href="/infrastructure" class="nav-link">Infrastructure</a></li>
-            <li><a href="/health" class="nav-link">Health</a></li>
-            <li><a href="/demo" class="nav-link">Live Demo</a></li>
-            <li><a href="/architecture" class="nav-link">Architecture</a></li>
-            <li><a href="/costs" class="nav-link">Cost Center</a></li>
+            <li><a href="/" class="nav-link"><span class="nav-icon">&#9776;</span> Guide &amp; Overview</a></li>
+            <li><a href="/architecture" class="nav-link"><span class="nav-icon">&#9635;</span> Architecture</a></li>
+            <li><a href="/infrastructure" class="nav-link"><span class="nav-icon">&#9729;</span> Infrastructure</a></li>
+            <li><a href="/health" class="nav-link"><span class="nav-icon">&#9829;</span> Health Monitor</a></li>
+            <li><a href="/demo" class="nav-link"><span class="nav-icon">&#9654;</span> Live Demo</a></li>
+            <li><a href="/costs" class="nav-link"><span class="nav-icon">&#36;</span> Cost Center</a></li>
         </ul>
+        <div class="sidebar-links">
+            <a href="https://github.com/KrishnaDistributedcomputing/FlowCore-AKS-POC" target="_blank" class="nav-link github-link">
+                <span class="nav-icon">&#128736;</span> GitHub Repository
+            </a>
+            <a href="/api/healthz" target="_blank" class="nav-link">
+                <span class="nav-icon">&#128279;</span> API Gateway
+            </a>
+        </div>
         <div class="sidebar-footer">
             <span class="env-badge">POC</span>
-            <small>Canada Central</small>
+            <small>Canada Central &bull; AKS 1.33</small>
+            <small class="text-dim">.NET 8 &bull; 9 Services</small>
         </div>
     </nav>
     <main class="main-content">

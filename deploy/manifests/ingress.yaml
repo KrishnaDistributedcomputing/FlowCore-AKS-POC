@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: flowcore-ingress
+  namespace: platform
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - flowcore-poc.canadacentral.cloudapp.azure.com
+      secretName: flowcore-tls
+  rules:
+    - host: flowcore-poc.canadacentral.cloudapp.azure.com
+      http:
+        paths:
+          # API Gateway — /api prefix stripped, forwarded to gateway
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway
+                port:
+                  number: 80
+          # Dashboard — everything else
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 80

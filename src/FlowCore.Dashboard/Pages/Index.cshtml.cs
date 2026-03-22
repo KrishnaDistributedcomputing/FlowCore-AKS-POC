@@ -11,9 +11,7 @@ public class IndexModel : PageModel
     public IndexModel(FlowCoreApiClient api) => _api = api;
 
     public int ServiceCount { get; set; }
-    public int PodCount { get; set; }
     public int HealthyCount { get; set; }
-    public int NodeCount { get; set; }
     public List<ServiceStatus> Services { get; set; } = new();
 
     public async Task OnGetAsync()
@@ -30,8 +28,6 @@ public class IndexModel : PageModel
         };
 
         ServiceCount = checks.Length;
-        PodCount = 12;
-        NodeCount = 3;
 
         foreach (var (name, ns, path) in checks)
         {

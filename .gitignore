@@ -26,3 +26,6 @@ Thumbs.db
 appsettings.*.json
 !appsettings.json
 !appsettings.Development.json
+
+deploy/manifests/secrets.yaml
+infra/scripts/create-secrets.sh
