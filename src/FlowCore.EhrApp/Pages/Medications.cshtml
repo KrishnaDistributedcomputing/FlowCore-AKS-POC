@@ -1,0 +1,45 @@
+@page
+@model FlowCore.EhrApp.Pages.MedicationsModel
+@{ ViewData["Title"] = "Medications"; }
+
+<div class="stat-grid" style="margin-bottom:20px;">
+    <div class="stat-card">
+        <div class="stat-icon">💊</div>
+        <div class="stat-value">@Model.ActiveCount</div>
+        <div class="stat-label">Active Medications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⛔</div>
+        <div class="stat-value">@Model.DiscontinuedCount</div>
+        <div class="stat-label">Discontinued</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">@Model.UniquePatients</div>
+        <div class="stat-label">Patients on Meds</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>All Medications</h2></div>
+    <div class="card-body">
+        <table class="data-table">
+            <thead><tr><th>Patient</th><th>Medication</th><th>Dosage</th><th>Frequency</th><th>Route</th><th>Prescribed By</th><th>Start Date</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var m in Model.Medications)
+                {
+                    <tr>
+                        <td><a href="/Patients/Detail?id=@m.PatientId">@m.Patient.FullName</a></td>
+                        <td><strong>@m.Name</strong></td>
+                        <td>@m.Dosage</td>
+                        <td>@m.Frequency</td>
+                        <td>@(m.Route ?? "—")</td>
+                        <td>@(m.PrescribedBy ?? "—")</td>
+                        <td>@m.StartDate.ToString("MMM dd, yyyy")</td>
+                        <td><span class="badge @(m.Status == "Active" ? "badge-success" : m.Status == "Discontinued" ? "badge-danger" : "badge-neutral")">@m.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

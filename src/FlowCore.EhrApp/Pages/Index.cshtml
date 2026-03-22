@@ -1,0 +1,118 @@
+@page
+@model FlowCore.EhrApp.Pages.IndexModel
+@{ ViewData["Title"] = "Dashboard"; }
+
+<div class="welcome-banner">
+    <h2>Welcome to FlowCore EHR</h2>
+    <p>Electronic Health Records system running on Azure Kubernetes Service with PostgreSQL. Manage patients, encounters, medications, lab results, and appointments.</p>
+    <div class="quick-actions">
+        <a href="/Patients/Create" class="btn btn-primary">+ New Patient</a>
+        <a href="/Appointments" class="btn btn-outline">View Appointments</a>
+        <a href="/Encounters" class="btn btn-outline">View Encounters</a>
+    </div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value">@Model.PatientCount</div>
+        <div class="stat-label">Total Patients</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-value">@Model.UpcomingAppointments</div>
+        <div class="stat-label">Upcoming Appointments</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🩺</div>
+        <div class="stat-value">@Model.ActiveEncounters</div>
+        <div class="stat-label">Active Encounters</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">💊</div>
+        <div class="stat-value">@Model.ActiveMedications</div>
+        <div class="stat-label">Active Medications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">🧪</div>
+        <div class="stat-value">@Model.PendingLabs</div>
+        <div class="stat-label">Pending Lab Results</div>
+    </div>
+</div>
+
+<div class="recent-grid">
+    <div class="card">
+        <div class="card-header">
+            <h2>Today's Appointments</h2>
+            <a href="/Appointments" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body">
+            @if (Model.TodayAppointments.Any())
+            {
+                <table class="data-table">
+                    <thead><tr><th>Time</th><th>Patient</th><th>Provider</th><th>Status</th></tr></thead>
+                    <tbody>
+                        @foreach (var apt in Model.TodayAppointments)
+                        {
+                            <tr>
+                                <td>@apt.ScheduledDate.ToString("h:mm tt")</td>
+                                <td><a href="/Patients/Detail?id=@apt.PatientId">@apt.Patient.FullName</a></td>
+                                <td>@apt.Provider</td>
+                                <td>
+                                    <span class="badge @(apt.Status == "Checked-In" ? "badge-success" : apt.Status == "Scheduled" ? "badge-info" : "badge-neutral")">@apt.Status</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="empty-state"><div class="empty-icon">📅</div><p>No appointments scheduled for today</p></div>
+            }
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Activity</h2>
+        </div>
+        <div class="card-body">
+            @foreach (var alert in Model.RecentAlerts)
+            {
+                <div class="alert-row">
+                    <div class="alert-dot @alert.DotColor"></div>
+                    <div class="alert-text">@alert.Message</div>
+                    <div class="alert-time">@alert.TimeAgo</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div style="margin-top: 24px;">
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Patients</h2>
+            <a href="/Patients" class="btn btn-sm btn-outline">View All</a>
+        </div>
+        <div class="card-body">
+            <table class="data-table">
+                <thead><tr><th>MRN</th><th>Name</th><th>Age</th><th>Gender</th><th>Insurance</th><th>Last Visit</th></tr></thead>
+                <tbody>
+                    @foreach (var p in Model.RecentPatients)
+                    {
+                        <tr>
+                            <td><code>@p.MRN</code></td>
+                            <td><a href="/Patients/Detail?id=@p.Id">@p.FullName</a></td>
+                            <td>@p.Age</td>
+                            <td>@p.Gender</td>
+                            <td>@(p.InsuranceProvider ?? "—")</td>
+                            <td>@(p.Encounters.OrderByDescending(e => e.EncounterDate).FirstOrDefault()?.EncounterDate.ToString("MMM dd, yyyy") ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -29,3 +29,6 @@ appsettings.*.json
 
 deploy/manifests/secrets.yaml
 infra/scripts/create-secrets.sh
+
+ehr-logs/
+ehr-logs.zip

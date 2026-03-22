@@ -1,0 +1,29 @@
+@page
+@model FlowCore.EhrApp.Pages.EncountersModel
+@{ ViewData["Title"] = "Encounters"; }
+
+<div class="card">
+    <div class="card-header">
+        <h2>All Encounters</h2>
+    </div>
+    <div class="card-body">
+        <table class="data-table">
+            <thead><tr><th>Date</th><th>Patient</th><th>Type</th><th>Provider</th><th>Department</th><th>Chief Complaint</th><th>Diagnosis</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var e in Model.Encounters)
+                {
+                    <tr>
+                        <td>@e.EncounterDate.ToString("MMM dd, yyyy")</td>
+                        <td><a href="/Patients/Detail?id=@e.PatientId">@e.Patient.FullName</a></td>
+                        <td><span class="badge badge-info">@e.EncounterType</span></td>
+                        <td>@(e.Provider ?? "—")</td>
+                        <td>@(e.Department ?? "—")</td>
+                        <td>@(e.ChiefComplaint ?? "—")</td>
+                        <td>@(e.Diagnosis ?? "—")</td>
+                        <td><span class="badge @(e.Status == "Active" ? "badge-warning" : e.Status == "Completed" ? "badge-success" : "badge-danger")">@e.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - FlowCore EHR</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">🏥</span>
+            <span class="brand-text">FlowCore EHR</span>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="/" class="@(ViewContext.RouteData.Values["page"]?.ToString() == "/Index" || ViewContext.HttpContext.Request.Path == "/" ? "active" : "")"><span class="nav-icon">📊</span> Dashboard</a></li>
+            <li><a href="/Patients" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Patients") ? "active" : "")"><span class="nav-icon">👥</span> Patients</a></li>
+            <li><a href="/Appointments" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Appointments") ? "active" : "")"><span class="nav-icon">📅</span> Appointments</a></li>
+            <li><a href="/Encounters" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Encounters") ? "active" : "")"><span class="nav-icon">🩺</span> Encounters</a></li>
+            <li><a href="/Medications" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Medications") ? "active" : "")"><span class="nav-icon">💊</span> Medications</a></li>
+            <li><a href="/LabResults" class="@(ViewContext.HttpContext.Request.Path.StartsWithSegments("/LabResults") ? "active" : "")"><span class="nav-icon">🧪</span> Lab Results</a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <div class="env-badge">AKS Container</div>
+            <div class="footer-text">PostgreSQL Backend</div>
+        </div>
+    </nav>
+    <main class="main-content">
+        <header class="top-bar">
+            <h1 class="page-title">@ViewData["Title"]</h1>
+            <div class="top-bar-actions">
+                <span class="db-badge" title="Connected to PostgreSQL on AKS">🐘 PostgreSQL</span>
+                <span class="k8s-badge" title="Running on Azure Kubernetes Service">☸ AKS</span>
+            </div>
+        </header>
+        <div class="content-area">
+            @RenderBody()
+        </div>
+    </main>
+</body>
+</html>

@@ -1,0 +1,49 @@
+@page
+@model FlowCore.EhrApp.Pages.PatientsModel
+@{ ViewData["Title"] = "Patients"; }
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div>
+        <form method="get" style="display:flex; gap:8px;">
+            <input type="text" name="search" value="@Model.Search" placeholder="Search by name or MRN..." class="form-control" style="width:300px;" />
+            <button type="submit" class="btn btn-outline">Search</button>
+        </form>
+    </div>
+    <a href="/Patients/Create" class="btn btn-primary">+ New Patient</a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>MRN</th><th>Name</th><th>Date of Birth</th><th>Age</th><th>Gender</th>
+                    <th>Phone</th><th>Insurance</th><th>Blood Type</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Patients)
+                {
+                    <tr>
+                        <td><code>@p.MRN</code></td>
+                        <td><a href="/Patients/Detail?id=@p.Id"><strong>@p.FullName</strong></a></td>
+                        <td>@p.DateOfBirth.ToString("MMM dd, yyyy")</td>
+                        <td>@p.Age</td>
+                        <td>@p.Gender</td>
+                        <td>@(p.Phone ?? "—")</td>
+                        <td>@(p.InsuranceProvider ?? "—")</td>
+                        <td>@(p.BloodType ?? "—")</td>
+                        <td>
+                            <a href="/Patients/Detail?id=@p.Id" class="btn btn-sm btn-outline">View</a>
+                            <a href="/Patients/Edit?id=@p.Id" class="btn btn-sm btn-outline">Edit</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @if (!Model.Patients.Any())
+        {
+            <div class="empty-state"><div class="empty-icon">👥</div><p>No patients found</p></div>
+        }
+    </div>
+</div>

@@ -1,0 +1,50 @@
+@page
+@model FlowCore.EhrApp.Pages.LabResultsModel
+@{ ViewData["Title"] = "Lab Results"; }
+
+<div class="stat-grid" style="margin-bottom:20px;">
+    <div class="stat-card">
+        <div class="stat-icon">🧪</div>
+        <div class="stat-value">@Model.TotalLabs</div>
+        <div class="stat-label">Total Lab Orders</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-value" style="color:var(--warning);">@Model.PendingCount</div>
+        <div class="stat-label">Pending Results</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-value" style="color:var(--danger);">@Model.AbnormalCount</div>
+        <div class="stat-label">Abnormal Results</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">✅</div>
+        <div class="stat-value" style="color:var(--success);">@Model.CompletedCount</div>
+        <div class="stat-label">Completed</div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>All Lab Results</h2></div>
+    <div class="card-body">
+        <table class="data-table">
+            <thead><tr><th>Order Date</th><th>Patient</th><th>Test</th><th>Category</th><th>Result</th><th>Reference Range</th><th>Ordered By</th><th>Status</th></tr></thead>
+            <tbody>
+                @foreach (var l in Model.Labs)
+                {
+                    <tr>
+                        <td>@l.OrderDate.ToString("MMM dd, yyyy")</td>
+                        <td><a href="/Patients/Detail?id=@l.PatientId">@l.Patient.FullName</a></td>
+                        <td><strong>@l.TestName</strong></td>
+                        <td>@l.Category</td>
+                        <td>@(l.Result ?? "—") @(l.Unit ?? "")</td>
+                        <td>@(l.ReferenceRange ?? "—")</td>
+                        <td>@(l.OrderedBy ?? "—")</td>
+                        <td><span class="badge @(l.Status == "Abnormal" ? "badge-danger" : l.Status == "Pending" ? "badge-warning" : "badge-success")">@l.Status</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
