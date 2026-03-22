@@ -9,10 +9,10 @@
 }
 
 <!-- Patient Banner -->
-<div class="card mb-4" style="background: linear-gradient(135deg, #1a365d 0%, #0f172a 60%, #1e293b 100%);">
+<div class="patient-banner card mb-4 fade-in">
     <div class="card-body p-4">
         <div class="d-flex align-items-center gap-3 flex-wrap">
-            <div class="avatar-circle bg-primary bg-opacity-25 text-primary">@Model.Patient.FirstName[0]@Model.Patient.LastName[0]</div>
+            <div class="avatar-circle">@Model.Patient.FirstName[0]@Model.Patient.LastName[0]</div>
             <div class="flex-grow-1">
                 <h3 class="fw-bold mb-1">@Model.Patient.FullName</h3>
                 <div class="d-flex gap-3 text-secondary small flex-wrap">
